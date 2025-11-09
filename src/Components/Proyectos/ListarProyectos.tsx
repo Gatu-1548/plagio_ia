@@ -20,7 +20,7 @@ interface GetProyectosPorUsuarioVars {
 }
 
 export default function ListarProyectos() {
-  // 3️⃣ Tipamos useQuery con <Data, Variables>
+  
   const { loading, error, data } = useQuery<
     GetProyectosPorUsuarioData,
     GetProyectosPorUsuarioVars
@@ -31,7 +31,7 @@ export default function ListarProyectos() {
   if (loading) return <p>Cargando proyectos...</p>;
   if (error) return <p>Error: {error.message}</p>;
 
-  // 4️⃣ TypeScript ahora entiende que data no es unknown ✅
+ 
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">Mis Proyectos</h1>
