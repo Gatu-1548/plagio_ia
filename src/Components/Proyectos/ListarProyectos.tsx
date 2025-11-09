@@ -2,7 +2,6 @@
 import { useQuery } from "@apollo/client/react"; 
 import { GET_PROYECTOS_POR_USUARIO } from "../../Services/proyectosGraphQL";
 
-// 🧠 1️⃣ Define la estructura del dato esperado
 
 const userId = Number(sessionStorage.getItem("userId"));
 interface Proyecto {
@@ -10,7 +9,7 @@ interface Proyecto {
   nombre: string;
 }
 
-// 2️⃣ Define el tipo del resultado de la query
+
 interface GetProyectosPorUsuarioData {
   getProyectosPorUsuario: Proyecto[];
 }

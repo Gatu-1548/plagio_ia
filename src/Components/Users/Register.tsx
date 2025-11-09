@@ -53,7 +53,7 @@ export default function Register() {
 
         {token && (
           <p className="mt-4 text-green-600 text-sm text-center wrap-break-word">
-            ✅ Registro exitoso!
+             Registro exitoso!
           </p>
         )}
         {error && (
