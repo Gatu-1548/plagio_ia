@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { loginUser } from "../../Services/authService";
 import { jwtDecode } from "jwt-decode";
+import { useNavigate } from "react-router-dom";
+
 
 interface TokenPayload {
   sub: string; 
@@ -16,6 +18,7 @@ export default function Login() {
   const [token, setToken] = useState<string | null>(null);
   const [error, setError] = useState("");
 
+  const navigate = useNavigate();
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -31,9 +34,9 @@ export default function Login() {
       const userId = decoded.id;
       console.log("ID del usuario:", userId);
       sessionStorage.setItem("userId", userId.toString());
-
+    
       setError("");
-      
+       navigate("/dashboard");
     } catch (err) {
       console.error(err);
       setError("Error al iniciar sesión");
