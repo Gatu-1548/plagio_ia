@@ -5,6 +5,7 @@ import AppRoutes from './routes/AppRoutes';
 import { ApolloProvider } from "@apollo/client/react";
 import client from "./Services/apolloClient";
 import { AuthProvider } from "./context/AuthContext";
+import { OrganizationProvider } from "./context/OrganizationContext";
 
 const container = document.getElementById('root');
 if (!container) throw new Error("No se encontró el elemento root");
@@ -12,9 +13,11 @@ if (!container) throw new Error("No se encontró el elemento root");
 createRoot(container).render(
   <StrictMode>
     <AuthProvider>
-      <ApolloProvider client={client}>
-        <AppRoutes />
-      </ApolloProvider>
+      <OrganizationProvider>
+        <ApolloProvider client={client}>
+          <AppRoutes />
+        </ApolloProvider>
+      </OrganizationProvider>
     </AuthProvider>
   </StrictMode>
 );
