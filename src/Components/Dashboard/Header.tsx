@@ -19,16 +19,17 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
 
   return (
     <header className="bg-white shadow p-4 flex justify-between items-center border-b border-gray-200">
-      <h2 className="text-lg font-semibold text-gray-800">Dashboard Principal</h2>
-
-      <div className="flex items-center gap-3">
-        <span className="text-sm text-gray-500"> {userEmail}</span>
-        <button
+      <button
           onClick={onToggleSidebar}
           className="p-2 rounded-lg hover:bg-gray-100 transition"
         >
           <Menu size={22} />
         </button>
+      <h2 className="text-lg font-semibold text-gray-800">PAGINA PRINCIPAL</h2>
+      
+      <div className="flex items-center gap-3">
+        <span className="text-sm text-gray-500"> {userEmail}</span>
+        
       </div>
     </header>
   );
