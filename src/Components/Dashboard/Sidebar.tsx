@@ -39,7 +39,7 @@ export default function Sidebar({ collapsed }: SidebarProps) {
         {!collapsed && openProyectos && (
           <div className="ml-8 mt-1 space-y-1">
             <button
-              onClick={() => navigate("/dashboard/proyectos/listar")}
+              onClick={() => navigate("/organizations/1/dashboard/proyectos/listar")}
               className="block w-full text-left px-2 py-1 rounded hover:bg-gray-800 text-sm"
             >
               Listar proyectos
