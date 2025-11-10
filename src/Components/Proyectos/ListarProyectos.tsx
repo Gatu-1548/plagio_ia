@@ -32,9 +32,13 @@ export default function ListarProyectos() {
     variables: { usuario_id: userId },
   });
 
-  const [crearProyecto] = useMutation(CREAR_PROYECTO);
-  const [actualizarProyecto] = useMutation(ACTUALIZAR_PROYECTO);
-  const [eliminarProyecto] = useMutation(ELIMINAR_PROYECTO);
+  const [crearProyecto] = useMutation<any, { nombre: string; usuario_id: number }>(
+    CREAR_PROYECTO
+  );
+  const [actualizarProyecto] = useMutation<any, { id: string; nombre: string }>(
+    ACTUALIZAR_PROYECTO
+  );
+  const [eliminarProyecto] = useMutation<any, { id: string }>(ELIMINAR_PROYECTO);
 
   const [showModal, setShowModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -67,11 +71,11 @@ export default function ListarProyectos() {
       return;
     }
 
-    console.log("Editando proyecto", { id: Number(editId), nombre: nombreProyecto });
+    console.log("Editando proyecto", { id: editId, nombre: nombreProyecto });
 
     try {
       const { data } = await actualizarProyecto({
-        variables: { id: Number(editId), nombre: nombreProyecto },
+        variables: { id: editId as string, nombre: nombreProyecto },
       });
       console.log("Proyecto actualizado:", data);
       setShowModal(false);
@@ -80,8 +84,11 @@ export default function ListarProyectos() {
       setEditId(null);
       refetch();
     } catch (err: any) {
-      console.error("Error GraphQL:", err.message);
-      alert("Error al actualizar proyecto: " + err.message);
+      console.error("Error al actualizar proyecto - message:", err?.message);
+      if (err?.graphQLErrors) console.error("graphQLErrors:", err.graphQLErrors);
+      if (err?.networkError) console.error("networkError:", err.networkError);
+      console.error("Full error object:", err);
+      alert("Error al actualizar proyecto: " + (err?.message || JSON.stringify(err)));
     }
   };
 
@@ -90,11 +97,14 @@ export default function ListarProyectos() {
     if (!confirm("¿Seguro que deseas eliminar este proyecto?")) return;
 
     try {
-      await eliminarProyecto({ variables: { id: Number(id) } });
+      await eliminarProyecto({ variables: { id } });
       refetch();
     } catch (err: any) {
-      console.error("Error al eliminar proyecto:", err.message);
-      alert("Error al eliminar proyecto: " + err.message);
+      console.error("Error al eliminar proyecto - message:", err?.message);
+      if (err?.graphQLErrors) console.error("graphQLErrors:", err.graphQLErrors);
+      if (err?.networkError) console.error("networkError:", err.networkError);
+      console.error("Full error object:", err);
+      alert("Error al eliminar proyecto: " + (err?.message || JSON.stringify(err)));
     }
   };
 
@@ -142,7 +152,7 @@ export default function ListarProyectos() {
         </div>
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {proyectos.map((proyecto, index) => (
+          {proyectos.map((proyecto: Proyecto, index: number) => (
             <motion.div
               key={proyecto.proyecto_id}
               initial={{ opacity: 0, y: 15 }}

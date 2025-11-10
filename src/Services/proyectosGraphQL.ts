@@ -12,7 +12,7 @@ export const GET_PROYECTOS_POR_USUARIO = gql`
 
 // 🔹 Obtener un proyecto por ID
 export const GET_PROYECTO = gql`
-  query GetProyecto($id: Int!) {
+  query GetProyecto($id: ID!) {
     getProyecto(id: $id) {
       proyecto_id
       nombre
@@ -42,7 +42,7 @@ export const CREAR_PROYECTO = gql`
 `;
 
 export const ACTUALIZAR_PROYECTO = gql`
-  mutation ActualizarProyecto($id: Int!, $nombre: String!) {
+  mutation ActualizarProyecto($id: ID!, $nombre: String!) {
     actualizarProyecto(id: $id, nombre: $nombre) {
       proyecto_id
       nombre
@@ -52,7 +52,7 @@ export const ACTUALIZAR_PROYECTO = gql`
 
 // 🔹 Eliminar proyecto
 export const ELIMINAR_PROYECTO = gql`
-  mutation EliminarProyecto($id: Int!) {
+  mutation EliminarProyecto($id: ID!) {
     eliminarProyecto(id: $id)
   }
 `;
