@@ -56,3 +56,25 @@ export const ELIMINAR_PROYECTO = gql`
     eliminarProyecto(id: $id)
   }
 `;
+
+// 🔹 Obtener un documento por ID (para polling del worker)
+export const GET_DOCUMENTO = gql`
+  query GetDocumento($id: ID!) {
+    getDocumento(id: $id) {
+      documento_id
+      nombre_archivo
+      estado
+      score_plagio
+      page_count
+      word_count
+      analysis_duration_ms
+    }
+  }
+`;
+
+// 🔹 Eliminar documento
+export const ELIMINAR_DOCUMENTO = gql`
+  mutation EliminarDocumento($id: ID!) {
+    eliminarDocumento(id: $id)
+  }
+`;

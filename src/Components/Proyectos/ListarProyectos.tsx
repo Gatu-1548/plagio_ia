@@ -8,6 +8,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { FolderOpen, Loader2, AlertCircle, PlusCircle, Edit2, Trash2, X } from "lucide-react";
 import { useState } from "react";
+import ProyectoDetalles from "./ProyectoDetalles";
 
 const userId = Number(sessionStorage.getItem("userId"));
 
@@ -44,6 +45,8 @@ export default function ListarProyectos() {
   const [editMode, setEditMode] = useState(false);
   const [nombreProyecto, setNombreProyecto] = useState("");
   const [editId, setEditId] = useState<string | null>(null);
+  const [showDetalles, setShowDetalles] = useState(false);
+  const [selectedProyectoId, setSelectedProyectoId] = useState<string | null>(null);
 
   const proyectos = data?.getProyectosPorUsuario || [];
 
@@ -169,6 +172,15 @@ export default function ListarProyectos() {
               <div className="flex justify-end gap-2">
                 <button
                   onClick={() => {
+                    setSelectedProyectoId(proyecto.proyecto_id);
+                    setShowDetalles(true);
+                  }}
+                  className="flex items-center gap-1 text-sm bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md"
+                >
+                  Ver
+                </button>
+                <button
+                  onClick={() => {
                     setEditMode(true);
                     setEditId(proyecto.proyecto_id);
                     setNombreProyecto(proyecto.nombre);
@@ -236,6 +248,31 @@ export default function ListarProyectos() {
                   {editMode ? "Actualizar" : "Crear"}
                 </button>
               </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal Detalles Proyecto */}
+      <AnimatePresence>
+        {showDetalles && selectedProyectoId && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-xl shadow-xl p-6 w-full max-w-3xl max-h-[85vh] overflow-auto"
+            >
+              <ProyectoDetalles
+                proyectoId={selectedProyectoId}
+                onClose={() => setShowDetalles(false)}
+                onRefetch={() => refetch()}
+              />
             </motion.div>
           </motion.div>
         )}
