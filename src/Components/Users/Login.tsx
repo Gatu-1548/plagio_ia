@@ -2,6 +2,7 @@ import { useState } from "react";
 import { loginUser } from "../../Services/authService";
 import { jwtDecode } from "jwt-decode";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 
 
 interface TokenPayload {
@@ -15,28 +16,20 @@ interface TokenPayload {
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [token, setToken] = useState<string | null>(null);
   const [error, setError] = useState("");
-
+  const { token, login } = useAuth();
   const navigate = useNavigate();
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const userToken = await loginUser(email, password);
-      setToken(userToken);
-      sessionStorage.setItem("token", userToken);
-
-     
       const decoded = jwtDecode<TokenPayload>(userToken);
-      console.log("Token decodificado:", decoded);
-
-  
       const userId = decoded.id;
-      console.log("ID del usuario:", userId);
-      sessionStorage.setItem("userId", userId.toString());
-    
+      const sub = decoded.sub;
+      login(userToken, userId, sub);
       setError("");
-       navigate("/dashboard");
+      navigate("/organizations");
     } catch (err) {
       console.error(err);
       setError("Error al iniciar sesión");
@@ -76,7 +69,7 @@ export default function Login() {
 
         {token && (
           <p className="mt-4 text-green-600 text-center wrap-break-word">
-           Login Exitoso
+            Login Exitoso
           </p>
         )}
         {error && (
