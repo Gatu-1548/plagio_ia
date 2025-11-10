@@ -4,6 +4,7 @@ import Login from "../Components/Users/Login";
 import Register from "../Components/Users/Register";
 import DashboardLayout from "../Components/Dashboard/DashboardLayout";
 import ListarProyectos from "../Components/Proyectos/ListarProyectos";
+import Organizations from "@/pages/organizations";
 
 export default function AppRoutes() {
   return (
@@ -12,9 +13,10 @@ export default function AppRoutes() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/organizations" element={<Organizations/>}/>
 
         {/* Dashboard */}
-        <Route path="/dashboard" element={<DashboardLayout />}>
+        <Route path={`/organizations/:id/dashboard`} element={<DashboardLayout />}>
           <Route path="proyectos/listar" element={<ListarProyectos />} />
           <Route path="documentos" element={<div>Documentos</div>} />
         </Route>
