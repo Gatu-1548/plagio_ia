@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useLazyQuery, useMutation } from "@apollo/client/react";
 import { GET_PROYECTO, GET_DOCUMENTO, ELIMINAR_DOCUMENTO } from "../../Services/proyectosGraphQL";
+import { motion, AnimatePresence } from "framer-motion";
 import { Loader2, Trash2 } from "lucide-react";
+import UploadDocumento from "./UploadDocumento";
 
 interface Documento {
   documento_id: string;
@@ -95,6 +97,13 @@ export default function ProyectoDetalles({ proyectoId, onClose, onRefetch }: { p
     }
   };
 
+  const [showUpload, setShowUpload] = useState(false);
+
+  const handleUploaded = async () => {
+    await refetch();
+    if (onRefetch) onRefetch();
+  };
+
   if (loading)
     return (
       <div className="p-4">
@@ -121,7 +130,10 @@ export default function ProyectoDetalles({ proyectoId, onClose, onRefetch }: { p
           <p className="text-sm text-gray-500">ID: {proyecto.proyecto_id}</p>
         </div>
         <div>
-          <button onClick={onClose} className="px-3 py-1 rounded border">Cerrar</button>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setShowUpload(true)} className="px-3 py-1 rounded bg-green-600 text-white">Subir documento</button>
+            <button onClick={onClose} className="px-3 py-1 rounded border">Cerrar</button>
+          </div>
         </div>
       </div>
 
@@ -161,6 +173,26 @@ export default function ProyectoDetalles({ proyectoId, onClose, onRefetch }: { p
           ))}
         </div>
       </div>
+      {/* Modal para subir documento */}
+      <AnimatePresence>
+        {showUpload && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md"
+            >
+              <UploadDocumento proyectoId={proyecto.proyecto_id} onUploaded={handleUploaded} onClose={() => setShowUpload(false)} />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
