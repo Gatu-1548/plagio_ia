@@ -1,4 +1,5 @@
-import { Folder, FileText, LogOut } from "lucide-react";
+import { useState } from "react";
+import { Folder, FileText, ChevronRight, ChevronDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface SidebarProps {
@@ -8,44 +9,84 @@ interface SidebarProps {
 export default function Sidebar({ collapsed }: SidebarProps) {
   const navigate = useNavigate();
 
+  // Estados para desplegar las "carpetas"
+  const [openProyectos, setOpenProyectos] = useState(false);
+  const [openDocumentos, setOpenDocumentos] = useState(false);
+
   return (
     <aside
-      className={`bg-indigo-700 text-white flex flex-col border-l border-indigo-600 transition-all duration-300 ${
+      className={`${
         collapsed ? "w-20" : "w-64"
-      }`}
+      } bg-gray-900 text-white h-screen p-4 transition-all duration-300`}
     >
-      <div className="flex items-center justify-between p-4 border-b border-indigo-600">
-        {!collapsed && <h1 className="font-bold text-lg">Panel</h1>}
+      
+
+      {/* Sección: Proyectos */}
+      <div>
+        <button
+          onClick={() => setOpenProyectos(!openProyectos)}
+          className="flex items-center justify-between w-full px-2 py-2 rounded hover:bg-gray-800"
+        >
+          <div className="flex items-center gap-3">
+            <Folder size={20} />
+            {!collapsed && <span>Proyectos</span>}
+          </div>
+          {!collapsed &&
+            (openProyectos ? <ChevronDown size={16} /> : <ChevronRight size={16} />)}
+        </button>
+
+        {/* Subopciones */}
+        {!collapsed && openProyectos && (
+          <div className="ml-8 mt-1 space-y-1">
+            <button
+              onClick={() => navigate("/dashboard/proyectos/listar")}
+              className="block w-full text-left px-2 py-1 rounded hover:bg-gray-800 text-sm"
+            >
+              Listar proyectos
+            </button>
+            <button
+              onClick={() => navigate("/dashboard/proyectos/crear")}
+              className="block w-full text-left px-2 py-1 rounded hover:bg-gray-800 text-sm"
+            >
+              Crear proyecto
+            </button>
+          </div>
+        )}
       </div>
 
-      <nav className="flex-1 p-2">
+      {/* Sección: Documentos */}
+      <div className="mt-4">
         <button
-          onClick={() => navigate("/dashboard/proyectos")}
-          className="flex items-center gap-3 w-full px-4 py-2 rounded hover:bg-indigo-600"
+          onClick={() => setOpenDocumentos(!openDocumentos)}
+          className="flex items-center justify-between w-full px-2 py-2 rounded hover:bg-gray-800"
         >
-          <Folder size={20} />
-          {!collapsed && "Proyectos"}
+          <div className="flex items-center gap-3">
+            <FileText size={20} />
+            {!collapsed && <span>Documentos</span>}
+          </div>
+          {!collapsed &&
+            (openDocumentos ? <ChevronDown size={16} /> : <ChevronRight size={16} />)}
         </button>
 
-        <button
-          onClick={() => navigate("/dashboard/documentos")}
-          className="flex items-center gap-3 w-full px-4 py-2 rounded hover:bg-indigo-600"
-        >
-          <FileText size={20} />
-          {!collapsed && "Documentos"}
-        </button>
-      </nav>
-
-      <button
-        onClick={() => {
-          sessionStorage.clear();
-          window.location.href = "/";
-        }}
-        className="flex items-center gap-3 justify-center bg-red-600 hover:bg-red-700 m-4 px-4 py-2 rounded"
-      >
-        <LogOut size={20} />
-        {!collapsed && "Salir"}
-      </button>
+        {/* Subopciones */}
+        {!collapsed && openDocumentos && (
+          <div className="ml-8 mt-1 space-y-1">
+            <button
+              onClick={() => navigate("/dashboard/documentos/listar")}
+              className="block w-full text-left px-2 py-1 rounded hover:bg-gray-800 text-sm"
+            >
+              Listar documentos
+            </button>
+            <button
+              onClick={() => navigate("/dashboard/documentos/subir")}
+              className="block w-full text-left px-2 py-1 rounded hover:bg-gray-800 text-sm"
+            >
+              Subir documento
+            </button>
+          </div>
+          
+        )}
+      </div>
     </aside>
   );
 }

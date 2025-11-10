@@ -15,7 +15,7 @@ export default function AppRoutes() {
 
         {/* Dashboard */}
         <Route path="/dashboard" element={<DashboardLayout />}>
-          <Route path="proyectos" element={<ListarProyectos />} />
+          <Route path="proyectos/listar" element={<ListarProyectos />} />
           <Route path="documentos" element={<div>Documentos</div>} />
         </Route>
       </Routes>
