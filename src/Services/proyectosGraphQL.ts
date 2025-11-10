@@ -81,7 +81,7 @@ export const ELIMINAR_DOCUMENTO = gql`
 
 // 🔹 Obtener proyectos por usuario y organización
 export const GET_PROYECTOS_POR_USUARIO_Y_ORGANIZACION = gql`
-  query GetProyectosPorUsuarioYOrganizacion($usuario_id: Int!, $organizacion_id: ID!) {
+  query GetProyectosPorUsuarioYOrganizacion($usuario_id: Int!, $organizacion_id: String!) {
     getProyectosPorUsuarioYOrganizacion(usuario_id: $usuario_id, organizacion_id: $organizacion_id) {
       proyecto_id
       nombre
@@ -92,7 +92,7 @@ export const GET_PROYECTOS_POR_USUARIO_Y_ORGANIZACION = gql`
 
 // 🔹 Obtener proyectos por organización (admin)
 export const GET_PROYECTOS_POR_ORGANIZACION = gql`
-  query GetProyectosPorOrganizacion($organizacion_id: ID!) {
+  query GetProyectosPorOrganizacion($organizacion_id: String!) {
     getProyectosPorOrganizacion(organizacion_id: $organizacion_id) {
       proyecto_id
       nombre
