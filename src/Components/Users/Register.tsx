@@ -1,17 +1,22 @@
 import { useState } from "react";
 import { registerUser } from "../../Services/authService";
+import { jwtDecode } from "jwt-decode";
+import { useAuth } from "../../context/AuthContext";
 
 export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [token, setToken] = useState(null);
   const [error, setError] = useState("");
+  const { token, login } = useAuth();
 
   const handleRegister = async (e: { preventDefault: () => void; }) => {
     e.preventDefault();
     try {
       const userToken = await registerUser(email, password);
-      setToken(userToken);
+      // Decodificar el userId del token
+      const decoded: any = jwtDecode(userToken);
+      const userId = decoded.id;
+      login(userToken, userId);
       setError("");
       console.log("Token recibido:", userToken);
     } catch (err) {
@@ -53,7 +58,7 @@ export default function Register() {
 
         {token && (
           <p className="mt-4 text-green-600 text-sm text-center wrap-break-word">
-             Registro exitoso!
+            Registro exitoso!
           </p>
         )}
         {error && (
