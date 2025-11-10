@@ -16,7 +16,7 @@ export default function AppRoutes() {
         <Route path="/organizations" element={<Organizations/>}/>
 
         {/* Dashboard */}
-        <Route path={`/organizations/:id/dashboard`} element={<DashboardLayout />}>
+        <Route path="/organization/dashboard" element={<DashboardLayout />}>
           <Route path="proyectos/listar" element={<ListarProyectos />} />
           <Route path="documentos" element={<div>Documentos</div>} />
         </Route>

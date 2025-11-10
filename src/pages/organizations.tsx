@@ -1,150 +1,277 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom'; 
-import { Users, Building2, Calendar } from 'lucide-react'; 
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Users, Building2, Calendar, Plus, CreditCard } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/Components/ui/tabs';
 import { Card, CardContent, CardDescription, CardTitle, CardHeader } from '@/Components/ui/card';
 import { Badge } from '@/Components/ui/badge';
 import { Button } from '@/Components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/Components/ui/dialog';
+import { Input } from '@/Components/ui/input';
+import { Label } from '@/Components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/Components/ui/select';
+import { Skeleton } from '@/Components/ui/skeleton'; 
+import { listarPlanes, type Plan } from '@/Services/planServices';
+import { listarOrganizaciones, crearOrganizacion, type OrganizationResponse } from '@/Services/organizationServices';
+import { crearSuscripcion, type SubscriptionResponse } from '@/Services/subscriptionServices';
+import { useAuth } from '@/context/AuthContext';
+import { useOrganization } from '@/context/OrganizationContext';
 
-interface Plan {
-    id: string;
-    name: string;
-    description: string;
-    billing_interval: string;
-    code: string;
-    price_cents: number;
-    currency: string;
-    active: boolean;
-    created_at: Date;
-    updated_at: Date;
-}
 
-interface Subscription {
-    id: string;
-    plan_id: string;
-    organization_id: string;
-    start_date: Date;
-    end_date: Date;
-    seat_count: number;
-    model_uses_count: number;
-    model_uses_limit: number;
-    status: string;
-    created_at: Date;
-    updated_at: Date;
-}
-
-interface Organizations {
-    id: string;
-    name: string;
-    owner_user_id: number;
-    created_at: Date;
-    updated_at: Date;
-}
-
-interface OrganizationUser {
-    id: string;
-    organization_id: string;
-    user_id: string;
-    role: string; 
-    status: string; 
-    joined_at: Date;
-    updated_at: Date;
-}
-
-interface DisplayOrganization extends Organizations {
+// DisplayOrganization extendido para frontend (con parsed dates)
+interface DisplayOrganization extends Omit<OrganizationResponse, 'createdAt' | 'updatedAt'> {
+    createdAt: Date;
+    updatedAt: Date;
     role?: string; 
-    status?: string; 
-    subscription?: Subscription; 
+    status?: string;
+    subscription?: SubscriptionResponse;
 }
 
-const mockOwnedOrgs: DisplayOrganization[] = [
-    {
-        id: '1',
-        name: 'Mi Equipo de Investigación',
-        owner_user_id: 1,
-        created_at: new Date('2025-10-15'),
-        role: 'owner',
-        status: 'active',
-        updated_at: new Date(),
-    },
-    {
-        id: '2',
-        name: 'Proyecto Académico 2025',
-        owner_user_id: 1,
-        created_at: new Date('2025-11-01'),
-        role: 'owner',
-        status: 'active',
-        updated_at: new Date(),
-    },
-];
-
-const mockMemberOrgs: DisplayOrganization[] = [
-    {
-        id: '3',
-        name: 'Colaboración Interuniversitaria',
-        owner_user_id: 2,
-        created_at: new Date('2025-09-20'),
-        role: 'admin',
-        status: 'active',
-        updated_at: new Date(),
-    },
-    {
-        id: '4',
-        name: 'Grupo de Análisis de Textos',
-        owner_user_id: 3,
-        created_at: new Date('2025-08-10'),
-        role: 'member',
-        status: 'pending',
-        updated_at: new Date(),
-    },
-];
+// Props para EmptyState
+interface EmptyStateProps {
+    title: string;
+    description: string;
+    icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+    onAction?: () => void;
+    actionText?: string;
+}
 
 export default function Organizations() {
     const navigate = useNavigate();
-    const [ownedOrgs] = useState<DisplayOrganization[]>(mockOwnedOrgs); 
-    const [memberOrgs] = useState<DisplayOrganization[]>(mockMemberOrgs); 
+    const { userId, token } = useAuth();
+    const { setCurrentOrg } = useOrganization();
+    const [ownedOrgs, setOwnedOrgs] = useState<DisplayOrganization[]>([]);
+    const [memberOrgs, setMemberOrgs] = useState<DisplayOrganization[]>([]);
+    const [plans, setPlans] = useState<Plan[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    // Estado para modal
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
+    const [orgName, setOrgName] = useState('');
+    const [orgDescription, setOrgDescription] = useState('');
+
+    useEffect(() => {
+        if (!userId) return; 
+        fetchInit();
+    }, [userId]);
+
+    const fetchInit = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            // Fetch planes
+            const fetchedPlans = await listarPlanes(token || '');
+            setPlans(fetchedPlans);
+
+            // Fetch organizaciones
+            const orgsData: OrganizationResponse[] = await listarOrganizaciones(token || '');
+
+            // Procesa y filtra: Owned (role OWNER o ownerUserId == userId), Member (otras)
+            const processedOrgs = orgsData.map(org => ({
+                ...org,
+                createdAt: new Date(org.createdAt),
+                updatedAt: new Date(org.updatedAt),
+                role: org.members?.find(m => m.userId === userId?.toString())?.role || (org.ownerUserId === userId ? 'OWNER' : 'MEMBER'),
+                status: org.members?.find(m => m.userId === userId?.toString())?.status || 'ACTIVE',
+            }));
+
+            const owned = processedOrgs.filter(org => org.ownerUserId === userId || org.role === 'OWNER');
+            const members = processedOrgs.filter(org => org.ownerUserId !== userId && org.role !== 'OWNER');
+
+            setOwnedOrgs(owned);
+            setMemberOrgs(members);
+        } catch (err) {
+            console.error(err);
+            setError('Error al cargar datos. Intenta recargar.');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleEnterOrg = (orgId: string) => {
-        navigate(`/organizations/${orgId}/dashboard`); 
+        // Buscar la organización y setearla como activa (convertir fechas a string)
+        const org = [...ownedOrgs, ...memberOrgs].find(o => o.id === orgId);
+        if (org) {
+            setCurrentOrg({
+                ...org,
+                createdAt: org.createdAt instanceof Date ? org.createdAt.toISOString() : org.createdAt,
+                updatedAt: org.updatedAt instanceof Date ? org.updatedAt.toISOString() : org.updatedAt,
+            });
+        }
+        navigate('/organization/dashboard');
+    };
+
+    const handleOpenCreateModal = () => {
+        setIsCreateModalOpen(true);
+    };
+
+    const handleCreateOrg = async () => {
+        if (!selectedPlan || !orgName.trim() || !userId || !token) {
+            alert('Por favor, selecciona un plan y un nombre. Verifica tu sesión.');
+            return;
+        }
+
+        try {
+            setLoading(true);
+
+            // Paso 1: Crear organización
+            const newOrg = await crearOrganizacion({
+                name: orgName,
+                slug: orgName.toLowerCase().replace(/\s+/g, '-'),
+                ownerUserId: userId,
+            }, token);
+
+            // Paso 2: Crear suscripción para la nueva org
+            const newSub = await crearSuscripcion(newOrg.id, {
+                planId: selectedPlan.id,
+                startDate: new Date().toISOString().split('T')[0],
+                renewsAt: new Date(Date.now() + (selectedPlan.billingInterval === 'MONTHLY' ? 30 : 365) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                seatCount: 1,
+            }, token);
+
+            // Actualiza UI local (en prod, refetch con fetchInit())
+            const processedNewOrg: DisplayOrganization = {
+                ...newOrg,
+                createdAt: new Date(newOrg.createdAt),
+                updatedAt: new Date(newOrg.updatedAt),
+                role: 'OWNER',
+                status: 'ACTIVE',
+                subscription: newSub,
+            };
+            setOwnedOrgs(prev => [...prev, processedNewOrg]);
+
+            // Setear como organización activa en el contexto
+            setCurrentOrg({
+                ...processedNewOrg,
+                createdAt: processedNewOrg.createdAt instanceof Date ? processedNewOrg.createdAt.toISOString() : processedNewOrg.createdAt,
+                updatedAt: processedNewOrg.updatedAt instanceof Date ? processedNewOrg.updatedAt.toISOString() : processedNewOrg.updatedAt,
+            });
+
+            // Limpia modal
+            setIsCreateModalOpen(false);
+            setOrgName('');
+            setOrgDescription('');
+            setSelectedPlan(null);
+
+            navigate('/organization/dashboard');
+        } catch (err) {
+            console.error(err);
+            alert(`Error: ${(err as Error).message}. Verifica tu conexión o permisos.`);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const formatDate = (date: Date) => {
         return new Date(date).toLocaleDateString('es-ES', { year: 'numeric', month: 'short', day: 'numeric' });
     };
 
+    const formatPrice = (priceCents: number, currency: string) => {
+        const dollars = (priceCents / 100).toFixed(2);
+        return `${currency} ${dollars}`;
+    };
+
     const getRoleBadge = (role: string) => {
-        const color = role === 'owner' ? 'bg-green-100 text-green-800' : role === 'admin' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800';
-        return <Badge className={`${color} border capitalize`}>{role}</Badge>;
+        const color = role === 'OWNER' ? 'bg-green-100 text-green-800' : role === 'ADMIN' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800';
+        return <Badge className={`${color} border capitalize`}>{role.toLowerCase()}</Badge>;
     };
 
     const getStatusBadge = (status: string) => {
-        const color = status === 'active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800';
-        return <Badge variant="secondary" className={`${color} border capitalize`}>{status}</Badge>;
+        const color = status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800';
+        return <Badge variant="secondary" className={`${color} border capitalize`}>{status.toLowerCase()}</Badge>;
     };
 
-    const EmptyState = ({
-        title,
-        description,
-        icon: Icon,
-    }: {
-        title: string;
-        description: string;
-        icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
-    }) => (
+    const EmptyState = ({ title, description, icon: Icon, onAction, actionText }: EmptyStateProps) => (
         <Card className="w-full border-dashed border-gray-300">
             <CardContent className="flex flex-col items-center justify-center py-12 text-center">
                 <Icon className="h-12 w-12 text-gray-400 mb-4" />
                 <CardTitle className="text-lg font-medium text-gray-900 mb-1">{title}</CardTitle>
-                <CardDescription className="text-sm text-gray-500">{description}</CardDescription>
+                <CardDescription className="text-sm text-gray-500 mb-6">{description}</CardDescription>
+                {onAction && (
+                    <Button onClick={onAction} variant="outline" size="sm">
+                        {actionText || 'Acción'}
+                    </Button>
+                )}
             </CardContent>
         </Card>
     );
 
+    const LoadingSkeleton = () => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(3)].map((_, i) => (
+                <Card key={i} className="hover:shadow-md transition-shadow">
+                    <CardHeader className="pb-3">
+                        <Skeleton className="h-6 w-3/4 mb-2" />
+                        <div className="flex gap-2">
+                            <Skeleton className="h-5 w-16" />
+                            <Skeleton className="h-5 w-16" />
+                        </div>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-3/4" />
+                    </CardContent>
+                    <CardContent className="pt-0">
+                        <Skeleton className="h-10 w-full" />
+                    </CardContent>
+                </Card>
+            ))}
+        </div>
+    );
+
+    if (loading) {
+        return (
+            <div className="container mx-auto py-8 px-4">
+                <div className="mb-8">
+                    <Skeleton className="h-8 w-64 mb-2" />
+                    <Skeleton className="h-4 w-96" />
+                </div>
+                <Tabs defaultValue="owned" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2 mb-6">
+                        <Skeleton className="h-10 w-full" />
+                    </TabsList>
+                    <LoadingSkeleton />
+                </Tabs>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="container mx-auto py-8 px-4">
+                <div className="text-center py-12">
+                    <CardTitle className="text-red-600 mb-2">{error}</CardTitle>
+                    <Button onClick={fetchInit}>Reintentar</Button>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="container mx-auto py-8 px-4">
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-2">Mis Organizaciones</h1>
-                <p className="text-muted-foreground">Gestiona tus equipos y proyectos para la detección de plagio.</p>
+            <div className="mb-8 flex items-center justify-between">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-2">Mis Organizaciones</h1>
+                    <p className="text-muted-foreground">Gestiona tus equipos y proyectos para la detección de plagio.</p>
+                </div>
+                <Button onClick={handleOpenCreateModal} className="flex items-center gap-2">
+                    <Plus className="h-4 w-4" />
+                    Crear Organización
+                </Button>
             </div>
 
             <Tabs defaultValue="owned" className="w-full">
@@ -165,19 +292,19 @@ export default function Organizations() {
                                             <Building2 className="h-5 w-5 text-primary" />
                                         </div>
                                         <div className="flex items-center gap-2 mt-1">
-                                            {getRoleBadge(org.role || 'owner')}
-                                            {getStatusBadge(org.status || 'active')}
+                                            {getRoleBadge(org.role || 'OWNER')}
+                                            {getStatusBadge(org.status || 'ACTIVE')}
                                         </div>
                                     </CardHeader>
                                     <CardContent className="space-y-2 text-sm">
                                         <div className="flex items-center gap-2 text-muted-foreground">
                                             <Calendar className="h-4 w-4" />
-                                            <span>Creada el {formatDate(org.created_at)}</span>
+                                            <span>Creada el {formatDate(org.createdAt)}</span>
                                         </div>
                                         {org.subscription && (
                                             <div className="flex items-center gap-2 text-muted-foreground">
                                                 <Users className="h-4 w-4" />
-                                                <span>Miembros: {org.subscription.seat_count}</span>
+                                                <span>Miembros: {org.subscription.seatCount}</span>
                                             </div>
                                         )}
                                     </CardContent>
@@ -198,6 +325,8 @@ export default function Organizations() {
                             title="No hay organizaciones creadas"
                             description="Crea tu primera organización para empezar a detectar plagio en documentos."
                             icon={Building2}
+                            onAction={handleOpenCreateModal}
+                            actionText="Crear Nueva Organización"
                         />
                     )}
                 </TabsContent>
@@ -214,19 +343,19 @@ export default function Organizations() {
                                             <Building2 className="h-5 w-5 text-primary" />
                                         </div>
                                         <div className="flex items-center gap-2 mt-1">
-                                            {getRoleBadge(org.role || 'member')}
-                                            {getStatusBadge(org.status || 'pending')}
+                                            {getRoleBadge(org.role || 'MEMBER')}
+                                            {getStatusBadge(org.status || 'PENDING')}
                                         </div>
                                     </CardHeader>
                                     <CardContent className="space-y-2 text-sm">
                                         <div className="flex items-center gap-2 text-muted-foreground">
                                             <Calendar className="h-4 w-4" />
-                                            <span>Unido el {formatDate(org.created_at)}</span>
+                                            <span>Unido el {formatDate(org.createdAt)}</span>
                                         </div>
                                         {org.subscription && (
                                             <div className="flex items-center gap-2 text-muted-foreground">
                                                 <Users className="h-4 w-4" />
-                                                <span>Miembros: {org.subscription.seat_count}</span>
+                                                <span>Miembros: {org.subscription.seatCount}</span>
                                             </div>
                                         )}
                                     </CardContent>
@@ -235,9 +364,9 @@ export default function Organizations() {
                                             onClick={() => handleEnterOrg(org.id)}
                                             className="w-full"
                                             variant="outline"
-                                            disabled={org.status !== 'active'}
+                                            disabled={org.status !== 'ACTIVE'}
                                         >
-                                            {org.status === 'active' ? 'Entrar a la Organización' : 'Pendiente de Aprobación'}
+                                            {org.status === 'ACTIVE' ? 'Entrar a la Organización' : 'Pendiente de Aprobación'}
                                         </Button>
                                     </CardContent>
                                 </Card>
@@ -248,10 +377,85 @@ export default function Organizations() {
                             title="No perteneces a ninguna organización"
                             description="Únete o crea una organización para colaborar en la detección de plagio."
                             icon={Users}
+                            onAction={handleOpenCreateModal}
+                            actionText="Crear Mi Primera Organización"
                         />
                     )}
                 </TabsContent>
             </Tabs>
+
+            {/* Modal de Creación */}
+            <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Crear Nueva Organización</DialogTitle>
+                        <DialogDescription>
+                            Selecciona un plan y proporciona detalles para comenzar.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div>
+                            <Label htmlFor="plan">Plan de Suscripción</Label>
+                            <Select value={selectedPlan?.id || ''} onValueChange={(value) => {
+                                const plan = plans.find(p => p.id === value);
+                                setSelectedPlan(plan || null);
+                            }}>
+                                <SelectTrigger id="plan">
+                                    <SelectValue placeholder="Elige un plan" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {plans.map((plan) => (
+                                        <SelectItem key={plan.id} value={plan.id}>
+                                            <div className="flex items-center justify-between">
+                                                <span>{plan.name}</span>
+                                                <span className="font-semibold">
+                                                    {formatPrice(plan.priceCents, plan.currency)}
+                                                    {plan.billingInterval === 'MONTHLY' ? ' / mes' : ' / año'}
+                                                </span>
+                                            </div>
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div>
+                            <Label htmlFor="orgName">Nombre de la Organización</Label>
+                            <Input
+                                id="orgName"
+                                placeholder="Ej. Mi Equipo de Detección de Plagio"
+                                value={orgName}
+                                onChange={(e) => setOrgName(e.target.value)}
+                            />
+                        </div>
+                        <div>
+                            <Label htmlFor="orgDescription">Descripción (Opcional)</Label>
+                            <Input
+                                id="orgDescription"
+                                placeholder="Breve descripción de tu equipo o proyecto"
+                                value={orgDescription}
+                                onChange={(e) => setOrgDescription(e.target.value)}
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button type="button" variant="outline" onClick={() => setIsCreateModalOpen(false)}>
+                            Cancelar
+                        </Button>
+                        <Button
+                            onClick={handleCreateOrg}
+                            disabled={!selectedPlan || !orgName.trim() || loading}
+                            className="flex items-center gap-2"
+                        >
+                            {loading ? 'Creando...' : (
+                                <>
+                                    <CreditCard className="h-4 w-4" />
+                                    Crear y Suscribir
+                                </>
+                            )}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
