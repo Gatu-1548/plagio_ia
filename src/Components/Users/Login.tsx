@@ -27,7 +27,8 @@ export default function Login() {
       const decoded = jwtDecode<TokenPayload>(userToken);
       const userId = decoded.id;
       const sub = decoded.sub;
-      login(userToken, userId, sub);
+      const role = decoded.roles[0].authority
+      login(userToken, userId, sub,role);
       setError("");
       navigate("/organizations");
     } catch (err) {

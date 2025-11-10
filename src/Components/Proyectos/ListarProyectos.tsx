@@ -1,13 +1,17 @@
 import { useQuery, useMutation } from "@apollo/client/react";
-import { 
-  GET_PROYECTOS_POR_USUARIO, 
-  CREAR_PROYECTO, 
-  ACTUALIZAR_PROYECTO, 
-  ELIMINAR_PROYECTO 
+import {
+  GET_PROYECTOS_POR_USUARIO,
+  GET_PROYECTOS_POR_USUARIO_Y_ORGANIZACION,
+  GET_PROYECTOS_POR_ORGANIZACION,
+  CREAR_PROYECTO,
+  ACTUALIZAR_PROYECTO,
+  ELIMINAR_PROYECTO,
 } from "../../Services/proyectosGraphQL";
 import { motion, AnimatePresence } from "framer-motion";
 import { FolderOpen, Loader2, AlertCircle, PlusCircle, Edit2, Trash2, X } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/context/AuthContext";
+import { useOrganization } from "@/context/OrganizationContext";
 import ProyectoDetalles from "./ProyectoDetalles";
 
 const userId = Number(sessionStorage.getItem("userId"));
@@ -15,6 +19,7 @@ const userId = Number(sessionStorage.getItem("userId"));
 interface Proyecto {
   proyecto_id: string;
   nombre: string;
+  organizacion_id?: string;
 }
 
 interface GetProyectosPorUsuarioData {
@@ -26,12 +31,35 @@ interface GetProyectosPorUsuarioVars {
 }
 
 export default function ListarProyectos() {
-  const { loading, error, data, refetch } = useQuery<
-    GetProyectosPorUsuarioData,
-    GetProyectosPorUsuarioVars
-  >(GET_PROYECTOS_POR_USUARIO, {
-    variables: { usuario_id: userId },
-  });
+  const { role, userId: authUserId } = useAuth();
+  const { currentOrg } = useOrganization();
+
+  // Preferir userId del contexto auth si existe
+  const effectiveUserId = authUserId ?? userId;
+  const organizacionId = currentOrg?.id ?? sessionStorage.getItem("organizationId");
+  const isAdmin = sessionStorage.getItem("role") === "ROLE_ADMIN";
+
+  // Elegir query según si es admin o no y si hay organizacion seleccionada
+  const useQueryResult = (() => {
+    if (isAdmin) {
+      return useQuery(GET_PROYECTOS_POR_ORGANIZACION, {
+        variables: { organizacion_id: organizacionId },
+      }) as any;
+    }
+
+    if (organizacionId) {
+      return useQuery(GET_PROYECTOS_POR_USUARIO_Y_ORGANIZACION, {
+        variables: { usuario_id: Number(effectiveUserId), organizacion_id: organizacionId },
+      }) as any;
+    }
+
+    // fallback al query por usuario simple
+    return useQuery<GetProyectosPorUsuarioData, GetProyectosPorUsuarioVars>(GET_PROYECTOS_POR_USUARIO, {
+      variables: { usuario_id: Number(effectiveUserId) },
+    }) as any;
+  })();
+
+  const { loading, error, data, refetch } = useQueryResult;
 
   const [crearProyecto] = useMutation<any, { nombre: string; usuario_id: number }>(
     CREAR_PROYECTO
@@ -48,7 +76,12 @@ export default function ListarProyectos() {
   const [showDetalles, setShowDetalles] = useState(false);
   const [selectedProyectoId, setSelectedProyectoId] = useState<string | null>(null);
 
-  const proyectos = data?.getProyectosPorUsuario || [];
+  // Normalizar resultados de las diferentes queries posibles
+  const proyectos: Proyecto[] =
+    (data && (data.getProyectosPorUsuario as Proyecto[])) ||
+    (data && (data.getProyectosPorUsuarioYOrganizacion as Proyecto[])) ||
+    (data && (data.getProyectosPorOrganizacion as Proyecto[])) ||
+    [];
 
   // Crear proyecto
   const handleCreate = async () => {
@@ -56,7 +89,7 @@ export default function ListarProyectos() {
 
     try {
       await crearProyecto({
-        variables: { nombre: nombreProyecto, usuario_id: userId },
+        variables: { nombre: nombreProyecto, usuario_id: Number(effectiveUserId) },
       });
       setNombreProyecto("");
       setShowModal(false);
@@ -209,7 +242,7 @@ export default function ListarProyectos() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50"
+            className="fixed inset-0 bg-amber-50 bg-opacity-40 flex items-center justify-center z-50"
           >
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
@@ -260,7 +293,7 @@ export default function ListarProyectos() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50"
+            className="fixed inset-0 bg-amber-50 bg-opacity-40 flex items-center justify-center z-50"
           >
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}

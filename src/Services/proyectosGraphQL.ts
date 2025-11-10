@@ -78,3 +78,25 @@ export const ELIMINAR_DOCUMENTO = gql`
     eliminarDocumento(id: $id)
   }
 `;
+
+// 🔹 Obtener proyectos por usuario y organización
+export const GET_PROYECTOS_POR_USUARIO_Y_ORGANIZACION = gql`
+  query GetProyectosPorUsuarioYOrganizacion($usuario_id: Int!, $organizacion_id: ID!) {
+    getProyectosPorUsuarioYOrganizacion(usuario_id: $usuario_id, organizacion_id: $organizacion_id) {
+      proyecto_id
+      nombre
+      organizacion_id
+    }
+  }
+`;
+
+// 🔹 Obtener proyectos por organización (admin)
+export const GET_PROYECTOS_POR_ORGANIZACION = gql`
+  query GetProyectosPorOrganizacion($organizacion_id: ID!) {
+    getProyectosPorOrganizacion(organizacion_id: $organizacion_id) {
+      proyecto_id
+      nombre
+      organizacion_id
+    }
+  }
+`;
