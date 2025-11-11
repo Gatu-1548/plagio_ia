@@ -1,10 +1,27 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Building2, Users, Settings, BarChart3, FileText, Shield, CreditCard } from "lucide-react";
+import { ArrowLeft, Building2, Users, BarChart3, FileText, Shield, CreditCard } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { obtenerUsuarios } from "@/Services/userServices";
 import { listarOrganizaciones } from "@/Services/organizationServices";
 import { listarPlanes } from "@/Services/planServices";
+import { useQuery } from "@apollo/client/react";
+import { GET_ALL_DOCS } from "@/Services/proyectosGraphQL";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+} from "recharts";
 import GestionUsuarios from "./GestionUsuarios";
 import GestionOrganizaciones from "./GestionOrganizaciones";
 import GestionPlanes from "./GestionPlanes";
@@ -18,6 +35,14 @@ export default function SistemaGestionEmpresarial() {
   const [usuariosActivos, setUsuariosActivos] = useState<number>(0);
   const [totalOrganizaciones, setTotalOrganizaciones] = useState<number>(0);
   const [totalPlanes, setTotalPlanes] = useState<number>(0);
+  const [planesActivos, setPlanesActivos] = useState<number>(0);
+  const [loading, setLoading] = useState(true);
+
+  // Query para obtener documentos
+  const { data: documentosData, loading: loadingDocs } = useQuery<{ getAllDocumentos: any[] }>(GET_ALL_DOCS, {
+    fetchPolicy: "network-only",
+    skip: activeSection !== "dashboard",
+  });
 
   useEffect(() => {
     if (token && activeSection === "dashboard") {
@@ -27,6 +52,7 @@ export default function SistemaGestionEmpresarial() {
 
   const fetchDashboardStats = async () => {
     if (!token) return;
+    setLoading(true);
     try {
       // Obtener estadísticas de usuarios
       const usuarios = await obtenerUsuarios(token);
@@ -40,8 +66,56 @@ export default function SistemaGestionEmpresarial() {
       // Obtener estadísticas de planes
       const planes = await listarPlanes(token);
       setTotalPlanes(planes.length);
+      setPlanesActivos(planes.filter((p) => p.active).length);
     } catch (err) {
       console.error("Error al obtener estadísticas:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const documentos = documentosData?.getAllDocumentos || [];
+  const totalDocumentos = documentos.length;
+  const documentosCompletados = documentos.filter((d) => d.estado === "COMPLETADO").length;
+  const documentosProcesando = documentos.filter((d) => d.estado === "PROCESANDO" || d.estado === "EN_PROCESO").length;
+  const documentosConError = totalDocumentos - documentosCompletados - documentosProcesando;
+
+  // Datos para gráficos
+  const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8"];
+
+  // Distribución de usuarios
+  const usuariosData = [
+    { name: "Activos", value: usuariosActivos },
+    { name: "Inactivos", value: totalUsuarios - usuariosActivos },
+  ];
+
+  // Distribución de documentos por estado
+  const documentosChartData = [
+    { name: "Completados", value: documentosCompletados },
+    { name: "Procesando", value: documentosProcesando },
+    { name: "Con Error", value: documentosConError },
+  ];
+
+  // Top organizaciones por cantidad de miembros (si tenemos los datos)
+  const [organizacionesConMiembros, setOrganizacionesConMiembros] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (token && activeSection === "dashboard" && totalOrganizaciones > 0) {
+      fetchOrganizacionesConMiembros();
+    }
+  }, [token, activeSection, totalOrganizaciones]);
+
+  const fetchOrganizacionesConMiembros = async () => {
+    if (!token) return;
+    try {
+      const orgs = await listarOrganizaciones(token);
+      const orgsData = orgs.slice(0, 5).map((org) => ({
+        name: org.name.length > 15 ? org.name.substring(0, 15) + "..." : org.name,
+        miembros: org.members?.length || 0,
+      }));
+      setOrganizacionesConMiembros(orgsData);
+    } catch (err) {
+      console.error("Error al obtener organizaciones:", err);
     }
   };
 
@@ -75,12 +149,6 @@ export default function SistemaGestionEmpresarial() {
       title: "Planes",
       icon: CreditCard,
       description: "Gestion de Planes"
-    },
-    {
-      id: "configuracion",
-      title: "Suscripciones",
-      icon: Settings,
-      description: "Gestion de Suscripciones"
     }
   ];
 
@@ -151,36 +219,245 @@ export default function SistemaGestionEmpresarial() {
         {/* Contenido de la sección activa */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           {activeSection === "dashboard" && (
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Dashboard</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-blue-900">Organizaciones</span>
-                    <Building2 className="w-5 h-5 text-blue-600" />
-                  </div>
-                  <p className="text-2xl font-bold text-blue-900">{totalOrganizaciones}</p>
-                  <p className="text-xs text-blue-700 mt-1">Total registradas</p>
-                </div>
-                <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-green-900">Usuarios</span>
-                    <Users className="w-5 h-5 text-green-600" />
-                  </div>
-                  <p className="text-2xl font-bold text-green-900">{totalUsuarios}</p>
-                  <p className="text-xs text-green-700 mt-1">
-                    {usuariosActivos} activos de {totalUsuarios} totales
-                  </p>
-                </div>
-                <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-purple-900">Planes</span>
-                    <CreditCard className="w-5 h-5 text-purple-600" />
-                  </div>
-                  <p className="text-2xl font-bold text-purple-900">{totalPlanes}</p>
-                  <p className="text-xs text-purple-700 mt-1">Total registrados</p>
-                </div>
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-2xl font-semibold text-gray-900 mb-2">Dashboard</h2>
+                <p className="text-sm text-gray-500">Vista general del sistema empresarial</p>
               </div>
+
+              {loading || loadingDocs ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {[...Array(4)].map((_, i) => (
+                    <Skeleton key={i} className="h-24 w-full" />
+                  ))}
+                </div>
+              ) : (
+                <>
+                  {/* Estadísticas principales */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <Card>
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="text-sm text-gray-500">Organizaciones</div>
+                          <Building2 className="w-5 h-5 text-blue-600" />
+                        </div>
+                        <div className="text-2xl font-bold text-gray-800">{totalOrganizaciones}</div>
+                        <div className="text-xs text-gray-400">Total registradas</div>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="text-sm text-gray-500">Usuarios</div>
+                          <Users className="w-5 h-5 text-green-600" />
+                        </div>
+                        <div className="text-2xl font-bold text-gray-800">{totalUsuarios}</div>
+                        <div className="text-xs text-gray-400">
+                          {usuariosActivos} activos de {totalUsuarios} totales
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="text-sm text-gray-500">Planes</div>
+                          <CreditCard className="w-5 h-5 text-purple-600" />
+                        </div>
+                        <div className="text-2xl font-bold text-gray-800">{totalPlanes}</div>
+                        <div className="text-xs text-gray-400">
+                          {planesActivos} activos de {totalPlanes} totales
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="text-sm text-gray-500">Documentos</div>
+                          <FileText className="w-5 h-5 text-indigo-600" />
+                        </div>
+                        <div className="text-2xl font-bold text-gray-800">{totalDocumentos}</div>
+                        <div className="text-xs text-gray-400">
+                          {documentosCompletados} completados, {documentosProcesando} procesando
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Estadísticas secundarias */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Resumen de Usuarios</CardTitle>
+                        <CardDescription>Distribución de usuarios en el sistema</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-gray-600">Total de usuarios</span>
+                            <span className="text-lg font-semibold">{totalUsuarios}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-gray-600">Usuarios activos</span>
+                            <span className="text-lg font-semibold text-green-600">{usuariosActivos}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-gray-600">Usuarios inactivos</span>
+                            <span className="text-lg font-semibold text-gray-400">
+                              {totalUsuarios - usuariosActivos}
+                            </span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Resumen de Documentos</CardTitle>
+                        <CardDescription>Estado de los documentos procesados</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-gray-600">Total de documentos</span>
+                            <span className="text-lg font-semibold">{totalDocumentos}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-gray-600">Completados</span>
+                            <span className="text-lg font-semibold text-green-600">{documentosCompletados}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-gray-600">En proceso</span>
+                            <span className="text-lg font-semibold text-yellow-600">{documentosProcesando}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-gray-600">Con errores</span>
+                            <span className="text-lg font-semibold text-red-600">
+                              {totalDocumentos - documentosCompletados - documentosProcesando}
+                            </span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Gráficos */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Distribución de Usuarios (Pie Chart) */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Distribución de Usuarios</CardTitle>
+                        <CardDescription>Usuarios activos vs inactivos en el sistema</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <ResponsiveContainer width="100%" height={300}>
+                          <PieChart>
+                            <Pie
+                              data={usuariosData}
+                              cx="50%"
+                              cy="50%"
+                              outerRadius={80}
+                              fill="#8884d8"
+                              dataKey="value"
+                              label={({ name, percent }) =>
+                                `${name} ${((percent || 0) * 100).toFixed(0)}%`
+                              }
+                            >
+                              {usuariosData.map((entry, index) => (
+                                <Cell key={`cell-${entry.name}`} fill={COLORS[index % COLORS.length]} />
+                              ))}
+                            </Pie>
+                            <Tooltip />
+                            <Legend />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </CardContent>
+                    </Card>
+
+                    {/* Distribución de Documentos (Pie Chart) */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Estado de Documentos</CardTitle>
+                        <CardDescription>Distribución de documentos por estado de procesamiento</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <ResponsiveContainer width="100%" height={300}>
+                          <PieChart>
+                            <Pie
+                              data={documentosChartData}
+                              cx="50%"
+                              cy="50%"
+                              outerRadius={80}
+                              fill="#8884d8"
+                              dataKey="value"
+                              label={({ name, percent }) =>
+                                `${name} ${((percent || 0) * 100).toFixed(0)}%`
+                              }
+                            >
+                              {documentosChartData.map((entry: any, index: number) => (
+                                <Cell key={`cell-${entry.name}`} fill={COLORS[index % COLORS.length]} />
+                              ))}
+                            </Pie>
+                            <Tooltip />
+                            <Legend />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Gráfico de Organizaciones */}
+                  {organizacionesConMiembros.length > 0 && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Top Organizaciones por Miembros</CardTitle>
+                        <CardDescription>Las 5 organizaciones con más miembros</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <ResponsiveContainer width="100%" height={300}>
+                          <BarChart data={organizacionesConMiembros}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="name" />
+                            <YAxis />
+                            <Tooltip />
+                            <Legend />
+                            <Bar dataKey="miembros" fill="#8884d8" name="Miembros" />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {/* Comparación General (Bar Chart) */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Comparación General del Sistema</CardTitle>
+                      <CardDescription>Resumen de las principales entidades del sistema</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <BarChart
+                          data={[
+                            { name: "Organizaciones", cantidad: totalOrganizaciones },
+                            { name: "Usuarios", cantidad: totalUsuarios },
+                            { name: "Planes", cantidad: totalPlanes },
+                            { name: "Documentos", cantidad: totalDocumentos },
+                          ]}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="name" />
+                          <YAxis />
+                          <Tooltip />
+                          <Legend />
+                          <Bar dataKey="cantidad" fill="#8884d8" name="Cantidad" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+                </>
+              )}
             </div>
           )}
 
