@@ -8,6 +8,7 @@ import { listarPlanes } from "@/Services/planServices";
 import GestionUsuarios from "./GestionUsuarios";
 import GestionOrganizaciones from "./GestionOrganizaciones";
 import GestionPlanes from "./GestionPlanes";
+import GestionDocumentos from "./GestionDocumentos";
 
 export default function SistemaGestionEmpresarial() {
   const navigate = useNavigate();
@@ -187,15 +188,7 @@ export default function SistemaGestionEmpresarial() {
 
           {activeSection === "usuarios" && <GestionUsuarios />}
 
-          {activeSection === "documentos" && (
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Gestión de Documentos</h2>
-              <p className="text-gray-600">Administra y monitorea todos los documentos del sistema.</p>
-              <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-500">Funcionalidad en desarrollo...</p>
-              </div>
-            </div>
-          )}
+          {activeSection === "documentos" && <GestionDocumentos />}
 
           {activeSection === "seguridad" && <GestionPlanes />}
 
