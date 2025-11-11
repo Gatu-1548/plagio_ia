@@ -130,19 +130,10 @@ export async function editarUsuario(id: number, data: UpdateUserRequest, token: 
 
 /**
  * Eliminar usuario por email
- * DELETE /api/users/by-email/{email}
+ * DELETE /api/users/{id}
  */
-export async function eliminarUsuarioPorEmail(email: string, token: string): Promise<void> {
-    const url = `${baseUrl}/api/users/by-email/${encodeURIComponent(email)}`;
-    // logging mínimo para debugging (no en producción)
-    try {
-        const masked = token ? `${token.slice(0,10)}...${token.slice(-10)}` : '<no-token>';
-        console.debug('userServices.eliminarUsuarioPorEmail ->', { url, auth: `Bearer ${masked}` });
-    } catch (e) {
-        // ignore
-    }
-
-    const res = await fetch(url, {
+export async function eliminarUsuarioPorEmail(id: number, token: string): Promise<void> {
+    const res = await fetch(`${baseUrl}/api/users/${encodeURIComponent(id)}`, {
         method: 'DELETE',
         headers: {
             'Authorization': `Bearer ${token}`,

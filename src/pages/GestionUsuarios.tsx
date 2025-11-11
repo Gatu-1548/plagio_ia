@@ -120,12 +120,12 @@ export default function GestionUsuarios() {
         }
     };
 
-    const handleDelete = async (email: string) => {
+    const handleDelete = async (id: number) => {
         if (!token) return;
-        if (!confirm(`¿Estás seguro de eliminar al usuario ${email}?`)) return;
+        if (!confirm(`¿Estás seguro de eliminar al usuario ${id}?`)) return;
 
         try {
-            await eliminarUsuarioPorEmail(email, token);
+            await eliminarUsuarioPorEmail(id, token);
             await fetchUsuarios();
         } catch (err: any) {
             console.error("Error al eliminar usuario:", err);
@@ -264,7 +264,7 @@ export default function GestionUsuarios() {
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
-                                                    onClick={() => handleDelete(user.email)}
+                                                    onClick={() => handleDelete(user.id)}
                                                     className="flex items-center gap-1 text-red-600 hover:text-red-700 hover:bg-red-50"
                                                 >
                                                     <Trash2 className="w-4 h-4" />
