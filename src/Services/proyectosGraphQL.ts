@@ -32,11 +32,12 @@ export const GET_PROYECTO = gql`
 
 // 🔹 Crear proyecto
 export const CREAR_PROYECTO = gql`
-  mutation CrearProyecto($nombre: String!, $usuario_id: Int!) {
-    crearProyecto(nombre: $nombre, usuario_id: $usuario_id) {
+  mutation CrearProyecto($nombre: String!, $usuario_id: Int!, $organizacion_id: String!) {
+    crearProyecto(nombre: $nombre, usuario_id: $usuario_id, organizacion_id: $organizacion_id) {
       proyecto_id
       nombre
       usuario_id
+      organizacion_id
     }
   }
 `;
