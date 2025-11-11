@@ -22,7 +22,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton'; 
+import { Skeleton } from '@/components/ui/skeleton';
 import { listarPlanes, type Plan } from '@/Services/planServices';
 import { listarOrganizaciones, crearOrganizacion, type OrganizationResponse } from '@/Services/organizationServices';
 import { crearSuscripcion, type SubscriptionResponse } from '@/Services/subscriptionServices';
@@ -34,7 +34,7 @@ import { useOrganization } from '@/context/OrganizationContext';
 interface DisplayOrganization extends Omit<OrganizationResponse, 'createdAt' | 'updatedAt'> {
     createdAt: Date;
     updatedAt: Date;
-    role?: string; 
+    role?: string;
     status?: string;
     subscription?: SubscriptionResponse;
 }
@@ -65,7 +65,7 @@ export default function Organizations() {
     const [orgDescription, setOrgDescription] = useState('');
 
     useEffect(() => {
-        if (!userId) return; 
+        if (!userId) return;
         fetchInit();
     }, [userId]);
 
@@ -73,24 +73,37 @@ export default function Organizations() {
         setLoading(true);
         setError(null);
         try {
-            // Fetch planes
             const fetchedPlans = await listarPlanes(token || '');
             setPlans(fetchedPlans);
 
-            // Fetch organizaciones
             const orgsData: OrganizationResponse[] = await listarOrganizaciones(token || '');
+            console.log(orgsData);
 
-            // Procesa y filtra: Owned (role OWNER o ownerUserId == userId), Member (otras)
-            const processedOrgs = orgsData.map(org => ({
-                ...org,
-                createdAt: new Date(org.createdAt),
-                updatedAt: new Date(org.updatedAt),
-                role: org.members?.find(m => m.userId === userId?.toString())?.role || (org.ownerUserId === userId ? 'OWNER' : 'MEMBER'),
-                status: org.members?.find(m => m.userId === userId?.toString())?.status || 'ACTIVE',
-            }));
+            const owned: DisplayOrganization[] = orgsData
+                .filter(org => org.ownerUserId === userId)
+                .map(org => ({
+                    ...org,
+                    createdAt: new Date(org.createdAt),
+                    updatedAt: new Date(org.updatedAt),
+                    role: "OWNER",
+                    status: "ACTIVE",
+                }));
 
-            const owned = processedOrgs.filter(org => org.ownerUserId === userId || org.role === 'OWNER');
-            const members = processedOrgs.filter(org => org.ownerUserId !== userId && org.role !== 'OWNER');
+            const members: DisplayOrganization[] = orgsData
+                .filter(org =>
+                    org.ownerUserId !== userId &&
+                    org.members?.some(member => member.userId === userId)
+                )
+                .map(org => {
+                    const memberInfo = org.members?.find(m => m.userId === userId);
+                    return {
+                        ...org,
+                        createdAt: new Date(org.createdAt),
+                        updatedAt: new Date(org.updatedAt),
+                        role: memberInfo?.role,
+                        status: memberInfo?.status,
+                    } as DisplayOrganization;
+                });
 
             setOwnedOrgs(owned);
             setMemberOrgs(members);
@@ -102,8 +115,9 @@ export default function Organizations() {
         }
     };
 
+
+
     const handleEnterOrg = (orgId: string) => {
-        // Buscar la organización y setearla como activa (convertir fechas a string)
         const org = [...ownedOrgs, ...memberOrgs].find(o => o.id === orgId);
         if (org) {
             setCurrentOrg({
