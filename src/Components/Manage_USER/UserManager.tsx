@@ -1,276 +1,327 @@
-import React, { useEffect, useState } from "react";
-import { createUser, updateUser, getAllUsers,deleteUserByEmail } from "../../Services/authService";
-const RoleBadge: React.FC<{ role?: string }> = ({ role }) => {
-  const r = (role || "ROLE_USER").toUpperCase();
-  const base = "inline-block px-2 py-0.5 text-xs font-medium rounded-full";
-  if (r === "ROLE_ADMIN") return <span className={`${base} bg-red-100 text-red-800`}>ADMIN</span>;
-  return <span className={`${base} bg-green-100 text-green-800`}>USER</span>;
-};
+import { useState, useEffect } from "react";
+import { Plus, Edit, Trash2, Search, Loader2, Shield, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { useAuth } from "@/context/AuthContext";
+import {
+    obtenerUsuarios,
+    crearUsuario,
+    editarUsuario,
+    eliminarUsuarioPorEmail,
+    type UserResponse,
+    type CreateUserRequest,
+} from "@/Services/userServices";
 
-const UserManager: React.FC = () => {
-  const [mensaje, setMensaje] = useState("");
-  const [users, setUsers] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [currentToken, setCurrentToken] = useState<string | null>(null);
-  const [currentRole, setCurrentRole] = useState<string | null>(null);
+export default function GestionUsuarios() {
+    const { token } = useAuth();
+    const [usuarios, setUsuarios] = useState<UserResponse[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingUser, setEditingUser] = useState<UserResponse | null>(null);
+    const [formData, setFormData] = useState<CreateUserRequest>({
+        email: "",
+        password: "",
+        role: "USER",
+        enabled: true,
+    });
+    const [submitting, setSubmitting] = useState(false);
 
-  // decode JWT payload safely
-  const decodePayload = (t?: string | null) => {
-    try {
-      if (!t) return null;
-      const parts = t.split('.');
-      if (parts.length < 2) return null;
-      const payload = parts[1];
-      const decoded = JSON.parse(atob(payload));
-      return decoded;
-    } catch (e) {
-      return null;
-    }
-  };
+    useEffect(() => {
+        if (token) {
+            fetchUsuarios();
+        }
+    }, [token]);
 
-  useEffect(() => {
-    const t = sessionStorage.getItem('token');
-    const r = sessionStorage.getItem('role');
-    setCurrentToken(t);
-    setCurrentRole(r);
-  }, []);
+    const fetchUsuarios = async () => {
+        if (!token) return;
+        setLoading(true);
+        setError(null);
+        try {
+            const data = await obtenerUsuarios(token);
+            setUsuarios(data);
+        } catch (err: any) {
+            console.error("Error al obtener usuarios:", err);
+            setError(err.message || "Error al cargar usuarios");
+        } finally {
+            setLoading(false);
+        }
+    };
 
-  // (Los create/update/delete se manejan desde los modales)
+    const handleOpenCreate = () => {
+        setEditingUser(null);
+        setFormData({
+            email: "",
+            password: "",
+            role: "USER",
+            enabled: true,
+        });
+        setIsModalOpen(true);
+    };
 
-  const fetchUsers = async () => {
-    setLoading(true);
-    try {
-      const list = await getAllUsers();
-      setUsers(list || []);
-    } catch (err) {
-      console.error("Error fetch users", err);
-      setMensaje("❌ Error al obtener usuarios");
-    } finally {
-      setLoading(false);
-    }
-  };
+    const handleOpenEdit = (user: UserResponse) => {
+        setEditingUser(user);
+        setFormData({
+            email: user.email,
+            password: "", // No prellenamos la contraseña por seguridad
+            role: user.role,
+            enabled: user.enabled,
+        });
+        setIsModalOpen(true);
+    };
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+   const handleSubmit = async () => {
+  if (!token) return;
 
-  // (La selección se maneja con el modal)
+  if (!formData.email || !formData.password) {
+    alert("Email y contraseña son obligatorios");
+    return;
+  }
 
-  // Modal states
-  const [modalOpen, setModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState<"create" | "edit">("create");
-  
+  setSubmitting(true);
 
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [userToDelete, setUserToDelete] = useState<any | null>(null);
-
-  // Campos del modal
-  const [mId, setMId] = useState<number | null>(null);
-  const [mEmail, setMEmail] = useState("");
-  const [mPassword, setMPassword] = useState("");
-  const [mRole, setMRole] = useState("USER");
-  const [mEnabled, setMEnabled] = useState(true);
-
-  const openCreateModal = () => {
-    setModalMode("create");
-    setMId(null);
-    setMEmail("");
-    setMPassword("");
-    setMRole("USER");
-    setMEnabled(true);
-    setModalOpen(true);
-  };
-
-  const openEditModal = (u: any) => {
-    setModalMode("edit");
-    setMId(u.id ?? null);
-    setMEmail(u.email || "");
-    setMPassword("");
-    setMRole(u.role || "USER");
-    setMEnabled(!!u.enabled);
-    setModalOpen(true);
-  };
-
-  const submitModal = async () => {
-    if (modalMode === "create") {
-      try {
-        const res = await createUser(mEmail, mPassword, mRole, mEnabled);
-        setMensaje(`✅ Usuario creado: ${res.email}`);
-        setModalOpen(false);
-        await fetchUsers();
-      } catch (err) {
-        console.error(err);
-        setMensaje("❌ Error al crear usuario");
-      }
-    } else if (modalMode === "edit") {
-      if (!mId) {
-        setMensaje("⚠️ ID inválido");
-        return;
-      }
-      try {
-        const res = await updateUser(mId, mEmail, mPassword, mRole, mEnabled);
-        setMensaje(`✏️ Usuario actualizado: ${res.email}`);
-        setModalOpen(false);
-        await fetchUsers();
-      } catch (err) {
-        console.error(err);
-        setMensaje("❌ Error al actualizar usuario");
-      }
-    }
-  };
-
-  const openDeleteModal = (u: any) => {
-    if (currentRole !== 'ROLE_ADMIN') {
-      setMensaje('❌ No tienes permisos para eliminar usuarios. Inicia sesión como ADMIN.');
-      return;
-    }
-    setUserToDelete(u);
-    setDeleteModalOpen(true);
-  };
-
- const confirmDelete = async () => {
-  if (!userToDelete) return;
   try {
-    await deleteUserByEmail(userToDelete.email);
-    setMensaje(`🗑️ Usuario eliminado: ${userToDelete.email}`);
-    setDeleteModalOpen(false);
-    setUserToDelete(null);
-    await fetchUsers();
-  } catch (err) {
-    console.error(err);
-    setMensaje(`❌ Error al eliminar usuario: ${(err as Error).message}`);
+    if (editingUser) {
+      // Editar usuario
+      await editarUsuario(editingUser.id, formData, token);
+    } else {
+      // Crear usuario
+      await crearUsuario(formData, token);
+    }
+
+    setIsModalOpen(false);
+    await fetchUsuarios();
+    setFormData({
+      email: "",
+      password: "",
+      role: "USER",
+      enabled: true,
+    });
+  } catch (err: any) {
+    console.error("Error al guardar usuario:", err);
+    alert(err.message || "Error al guardar usuario");
+  } finally {
+    setSubmitting(false);
   }
 };
 
-  return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-bold">Usuarios</h2>
-        <div className="flex items-center space-x-2">
-          <button onClick={openCreateModal} className="px-3 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">Crear usuario</button>
-        </div>
-      </div>
+    const handleDelete = async (id: number) => {
+        if (!token) return;
+        if (!confirm(`¿Estás seguro de eliminar al usuario ${id}?`)) return;
 
-      {/* Debug: token/role status (temporal) */}
-      <div className="mb-4 flex items-center space-x-4 text-sm">
-        <div className="flex items-center space-x-2">
-          <span className="text-gray-600">Rol actual:</span>
-          <RoleBadge role={currentRole || undefined} />
-        </div>
-        <div className="flex items-center space-x-2">
-          <span className="text-gray-600">Token:</span>
-          {currentToken ? (
-            (() => {
-              const p = decodePayload(currentToken);
-              if (p && p.exp) {
-                const expDate = new Date(p.exp * 1000).toLocaleString();
-                return <span className="text-green-600">OK (expira: {expDate})</span>;
-              }
-              return <span className="text-green-600">OK</span>;
-            })()
-          ) : (
-            <span className="text-red-600">No iniciado</span>
-          )}
-        </div>
-        {currentRole !== 'ROLE_ADMIN' && (
-          <div className="ml-auto text-xs text-yellow-700">Nota: necesitas rol ADMIN para eliminar usuarios</div>
-        )}
-      </div>
+        try {
+            await eliminarUsuarioPorEmail(id, token);
+            await fetchUsuarios();
+        } catch (err: any) {
+            console.error("Error al eliminar usuario:", err);
+            alert(err.message || "Error al eliminar usuario");
+        }
+    };
 
-      {mensaje && <div className="mb-4 p-3 rounded bg-gray-50 border">{mensaje}</div>}
+    const filteredUsuarios = usuarios.filter((user) =>
+        user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.role.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
-      <div className="bg-white shadow rounded-lg">
-        <div className="overflow-auto max-h-96">
-          <table className="min-w-full divide-y divide-gray-200 text-sm">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">#</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Email</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Rol</th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-100">
-              {loading ? (
-                <tr><td className="p-4" colSpan={4}>Cargando usuarios...</td></tr>
-              ) : users.length === 0 ? (
-                <tr><td className="p-4" colSpan={4}>No hay usuarios registrados.</td></tr>
-              ) : (
-                users.map((u, i) => (
-                  <tr key={u.id} className={`${i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
-                    <td className="px-4 py-3 align-top text-gray-700">{i + 1}</td>
-                    <td className="px-4 py-3 align-top text-gray-900">{u.email}</td>
-                    <td className="px-4 py-3 align-top"><RoleBadge role={u.role} /></td>
-                    <td className="px-4 py-3 text-right">
-                      <button onClick={() => openEditModal(u)} className="mr-2 inline-flex items-center px-3 py-1 bg-yellow-400 text-xs rounded">Editar</button>
-                      <button
-                        onClick={() => openDeleteModal(u)}
-                        disabled={currentRole !== 'ROLE_ADMIN'}
-                        className={`inline-flex items-center px-3 py-1 text-xs rounded ${currentRole === 'ROLE_ADMIN' ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-500 cursor-not-allowed'}`}
-                      >Eliminar</button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+    const getRoleBadge = (role: string) => {
+        if (role === "ADMIN" || role === "ROLE_ADMIN") {
+            return (
+                <Badge className="bg-purple-100 text-purple-800 border-purple-300">
+                    <Shield className="w-3 h-3 mr-1" />
+                    Admin
+                </Badge>
+            );
+        }
+        return (
+            <Badge className="bg-blue-100 text-blue-800 border-blue-300">
+                <User className="w-3 h-3 mr-1" />
+                Usuario
+            </Badge>
+        );
+    };
 
-      {/* Modal create/edit */}
-      {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black opacity-40" onClick={() => setModalOpen(false)} />
-          <div className="bg-white rounded-lg shadow-lg z-10 w-full max-w-lg p-6">
-            <h3 className="text-lg font-semibold mb-4">{modalMode === 'create' ? 'Crear usuario' : 'Editar usuario'}</h3>
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+                <span className="ml-3 text-gray-600">Cargando usuarios...</span>
+            </div>
+        );
+    }
 
-            <div className="mb-3">
-              <label className="block text-sm text-gray-700">Email</label>
-              <input value={mEmail} onChange={(e) => setMEmail(e.target.value)} className="mt-1 block w-full border rounded p-2" />
+    return (
+        <div>
+            <div className="flex items-center justify-between mb-6">
+                <div>
+                    <h2 className="text-xl font-semibold text-gray-900 mb-2">Administración de Usuarios</h2>
+                    <p className="text-sm text-gray-600">Gestiona usuarios, roles y permisos del sistema</p>
+                </div>
+                <Button onClick={handleOpenCreate} className="flex items-center gap-2">
+                    <Plus className="w-4 h-4" />
+                    Crear Usuario
+                </Button>
             </div>
 
-            <div className="mb-3">
-              <label className="block text-sm text-gray-700">Contraseña</label>
-              <input type="password" value={mPassword} onChange={(e) => setMPassword(e.target.value)} className="mt-1 block w-full border rounded p-2" placeholder={modalMode === 'edit' ? 'Dejar vacío para no cambiar' : ''} />
+            {error && (
+                <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-sm text-red-800">{error}</p>
+                </div>
+            )}
+
+            {/* Barra de búsqueda */}
+            <div className="mb-6">
+                <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <Input
+                        type="text"
+                        placeholder="Buscar por email o rol..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10"
+                    />
+                </div>
             </div>
 
-            <div className="mb-3">
-              <label className="block text-sm text-gray-700">Rol</label>
-              <select value={mRole} onChange={(e) => setMRole(e.target.value)} className="mt-1 block w-full border rounded p-2">
-                <option value="ROLE_USER">USER</option>
-                <option value="ROLE_ADMIN">ADMIN</option>
-              </select>
+            {/* Tabla de usuarios */}
+            <div className="border rounded-lg overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="w-full">
+                        <thead className="bg-gray-50 border-b">
+                            <tr>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rol</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                            {filteredUsuarios.length === 0 ? (
+                                <tr>
+                                    <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                                        {searchTerm ? "No se encontraron usuarios" : "No hay usuarios registrados"}
+                                    </td>
+                                </tr>
+                            ) : (
+                                filteredUsuarios.map((user) => (
+                                    <tr key={user.id} className="hover:bg-gray-50">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{user.id}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{user.email}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap">{getRoleBadge(user.role)}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <Badge
+                                                className={
+                                                    user.enabled
+                                                        ? "bg-green-100 text-green-800 border-green-300"
+                                                        : "bg-red-100 text-red-800 border-red-300"
+                                                }
+                                            >
+                                                {user.enabled ? "Activo" : "Inactivo"}
+                                            </Badge>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <div className="flex items-center gap-2">
+                                                <Button variant="outline" size="sm" onClick={() => handleOpenEdit(user)} className="flex items-center gap-1">
+                                                    <Edit className="w-4 h-4" /> Editar
+                                                </Button>
+                                                <Button variant="outline" size="sm" onClick={() => handleDelete(user.id)} className="flex items-center gap-1 text-red-600 hover:text-red-700 hover:bg-red-50">
+                                                    <Trash2 className="w-4 h-4" /> Eliminar
+                                                </Button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
-            <div className="flex items-center mb-4">
-              <input id="mEnabled" type="checkbox" checked={mEnabled} onChange={() => setMEnabled(!mEnabled)} className="h-4 w-4" />
-              <label htmlFor="mEnabled" className="ml-2 text-sm">Habilitado</label>
-            </div>
-
-            <div className="flex justify-end space-x-2">
-              <button onClick={() => setModalOpen(false)} className="px-3 py-2 rounded border">Cancelar</button>
-              <button onClick={submitModal} className="px-3 py-2 bg-indigo-600 text-white rounded">{modalMode === 'create' ? 'Crear' : 'Guardar'}</button>
-            </div>
-          </div>
+            {/* Modal de crear/editar */}
+            <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>{editingUser ? "Editar Usuario" : "Crear Nuevo Usuario"}</DialogTitle>
+                        <DialogDescription>
+                            {editingUser
+                                ? "Modifica la información del usuario. Deja la contraseña vacía para mantener la actual."
+                                : "Completa los datos para crear un nuevo usuario en el sistema."}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div>
+                            <Label htmlFor="email">Email *</Label>
+                            <Input
+                                id="email"
+                                type="email"
+                                placeholder="usuario@ejemplo.com"
+                                value={formData.email}
+                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                
+                            />
+                        </div>
+                        <div>
+                            <Label htmlFor="password">Contraseña *{editingUser && " (dejar vacío para mantener la actual)"}</Label>
+                            <Input
+                                id="password"
+                                type="password"
+                                placeholder="••••••••"
+                                value={formData.password}
+                                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                            />
+                        </div>
+                        <div>
+                            <Label htmlFor="role">Rol</Label>
+                            <Select
+                                value={formData.role || "USER"}
+                                onValueChange={(value) => setFormData({ ...formData, role: value })}
+                            >
+                                <SelectTrigger id="role">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="USER">Usuario</SelectItem>
+                                    <SelectItem value="ADMIN">Administrador</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="checkbox"
+                                id="enabled"
+                                checked={formData.enabled ?? true}
+                                onChange={(e) => setFormData({ ...formData, enabled: e.target.checked })}
+                                className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                            />
+                            <Label htmlFor="enabled" className="cursor-pointer">Usuario habilitado</Label>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)} disabled={submitting}>Cancelar</Button>
+                        <Button onClick={handleSubmit} disabled={submitting}>
+                            {submitting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Guardando...</> : editingUser ? "Guardar Cambios" : "Crear Usuario"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
-      )}
-
-      {/* Delete confirm modal */}
-      {deleteModalOpen && userToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black opacity-40" onClick={() => setDeleteModalOpen(false)} />
-          <div className="bg-white rounded-lg shadow-lg z-10 w-full max-w-md p-6">
-            <h3 className="text-lg font-semibold mb-4">Confirmar eliminación</h3>
-            <p className="mb-4">¿Está seguro que desea eliminar al usuario <strong>{userToDelete.email}</strong>? Esta acción no se puede deshacer.</p>
-            <div className="flex justify-end space-x-2">
-              <button onClick={() => setDeleteModalOpen(false)} className="px-3 py-2 rounded border">Cancelar</button>
-              <button onClick={confirmDelete} disabled={currentRole !== 'ROLE_ADMIN'} className={`px-3 py-2 rounded ${currentRole === 'ROLE_ADMIN' ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-500 cursor-not-allowed'}`}>Eliminar</button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-export default UserManager;
+    );
+}
