@@ -5,6 +5,8 @@ import Register from "../Components/Users/Register";
 import DashboardLayout from "../Components/Dashboard/DashboardLayout";
 import ListarProyectos from "../Components/Proyectos/ListarProyectos";
 import Organizations from "@/pages/organizations";
+import Dashboard from "@/pages/dashboard";
+import Documents from "@/pages/documents";
 
 export default function AppRoutes() {
   return (
@@ -16,9 +18,11 @@ export default function AppRoutes() {
         <Route path="/organizations" element={<Organizations/>}/>
 
         {/* Dashboard */}
-        <Route path="/organization/dashboard" element={<DashboardLayout />}>
-          <Route path="proyectos/listar" element={<ListarProyectos />} />
-          <Route path="documentos" element={<div>Documentos</div>} />
+        <Route path="/organization" element={<DashboardLayout />}>
+          <Route path="dashboard" element={<Dashboard/>}/>
+          <Route path="dashboard/proyectos/listar" element={<ListarProyectos />} />
+          <Route path="dashboard/proyectos/:id/documentos" element={<Documents />} />
+          <Route path="dashboard/documentos" element={<div>Documentos</div>} />
         </Route>
       </Routes>
     </Router>
