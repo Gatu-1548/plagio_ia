@@ -5,14 +5,12 @@ import {
   GET_DOCUMENTO, 
   ELIMINAR_DOCUMENTO 
 } from "../Services/proyectosGraphQL";
-import { motion, AnimatePresence } from "framer-motion";
 import { FileText, Loader2, AlertCircle, ChevronLeft, Trash2, Upload } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/Components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/Components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/Components/ui/table";
 import { Badge } from "@/Components/ui/badge";
-import UploadDocumento from "@/Components/Proyectos/UploadDocumento";
 
 interface Documento {
   documento_id: string;
@@ -51,7 +49,6 @@ export default function Documents(){
 
   const [pollingDocId, setPollingDocId] = useState<string | null>(null);
   const intervalRef = useRef<number | null>(null);
-  const [showUpload, setShowUpload] = useState(false);
 
   useEffect(() => {
     if (docData && docData.getDocumento) {
@@ -103,11 +100,6 @@ export default function Documents(){
       console.error("Error eliminando documento", err);
       alert("Error eliminando documento: " + (err?.message || JSON.stringify(err)));
     }
-  };
-
-  const handleUploaded = async () => {
-    await refetch();
-    setShowUpload(false);
   };
 
   if (loading) {
@@ -164,7 +156,7 @@ export default function Documents(){
           </div>
         </div>
         <Button
-          onClick={() => setShowUpload(true)}
+          onClick={() => navigate(`upload`)}
           className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white"
         >
           <Upload className="w-4 h-4" />
@@ -253,31 +245,6 @@ export default function Documents(){
           )}
         </CardContent>
       </Card>
-
-      {/* Modal para subir documento */}
-      <AnimatePresence>
-        {showUpload && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white rounded-xl shadow-xl w-full max-w-md"
-            >
-              <UploadDocumento 
-                proyectoId={proyecto.proyecto_id} 
-                onUploaded={handleUploaded} 
-                onClose={() => setShowUpload(false)} 
-              />
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
