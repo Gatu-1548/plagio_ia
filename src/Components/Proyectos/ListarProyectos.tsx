@@ -13,7 +13,7 @@ import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useOrganization } from "@/context/OrganizationContext";
 import { useNavigate } from "react-router-dom";
-import { Dialog, DialogHeader, DialogFooter, DialogDescription, DialogTitle, DialogContent, DialogClose } from "../ui/dialog";
+import { Dialog, DialogHeader, DialogFooter, DialogDescription, DialogTitle, DialogContent, DialogClose } from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,10 +23,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "../ui/alert-dialog";
-import { Button } from "../ui/button";
-import { Label } from "../ui/label";
-import { Input } from "../ui/input";
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
 const userId = Number(sessionStorage.getItem("userId"));
 

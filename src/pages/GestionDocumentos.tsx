@@ -1,16 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Search, Loader2, FileText, Trash2, Eye, CheckCircle2, Clock, XCircle } from "lucide-react";
-import { Button } from "@/Components/ui/button";
-import { Input } from "@/Components/ui/input";
-import { Badge } from "@/Components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import {
     Dialog,
     DialogContent,
     DialogDescription,
     DialogHeader,
     DialogTitle,
-} from "@/Components/ui/dialog";
-import { Label } from "@/Components/ui/label";
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { useQuery, useMutation } from "@apollo/client/react";
 import { GET_ALL_DOCS, ELIMINAR_DOCUMENTO } from "@/Services/proyectosGraphQL";
 

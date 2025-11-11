@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { Plus, Edit, Trash2, Search, Loader2, CreditCard, ToggleLeft, ToggleRight, Eye } from "lucide-react";
-import { Button } from "@/Components/ui/button";
-import { Input } from "@/Components/ui/input";
-import { Badge } from "@/Components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import {
     Dialog,
     DialogContent,
@@ -10,15 +10,15 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-} from "@/Components/ui/dialog";
-import { Label } from "@/Components/ui/label";
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "@/Components/ui/select";
+} from "@/components/ui/select";
 import { useAuth } from "@/context/AuthContext";
 import {
     listarPlanes,
@@ -201,13 +201,14 @@ export default function GestionPlanes() {
         return `${currency} ${(priceCents / 100).toFixed(2)}`;
     };
 
+    /*
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString("es-ES", {
             year: "numeric",
             month: "short",
             day: "numeric",
         });
-    };
+    };*/
 
     if (loading) {
         return (
