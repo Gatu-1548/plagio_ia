@@ -101,3 +101,17 @@ export const GET_PROYECTOS_POR_ORGANIZACION = gql`
     }
   }
 `;
+
+export const GET_ALL_DOCS = gql`
+  query GetAllDocumentos {
+    getAllDocumentos {
+      documento_id
+      nombre_archivo
+      estado
+      score_plagio
+      page_count
+      word_count
+      analysis_duration_ms
+    }
+  }
+`;
