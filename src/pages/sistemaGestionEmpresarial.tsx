@@ -4,8 +4,10 @@ import { ArrowLeft, Building2, Users, Settings, BarChart3, FileText, Shield, Cre
 import { useAuth } from "@/context/AuthContext";
 import { obtenerUsuarios } from "@/Services/userServices";
 import { listarOrganizaciones } from "@/Services/organizationServices";
+import { listarPlanes } from "@/Services/planServices";
 import GestionUsuarios from "./GestionUsuarios";
 import GestionOrganizaciones from "./GestionOrganizaciones";
+import GestionPlanes from "./GestionPlanes";
 
 export default function SistemaGestionEmpresarial() {
   const navigate = useNavigate();
@@ -14,6 +16,7 @@ export default function SistemaGestionEmpresarial() {
   const [totalUsuarios, setTotalUsuarios] = useState<number>(0);
   const [usuariosActivos, setUsuariosActivos] = useState<number>(0);
   const [totalOrganizaciones, setTotalOrganizaciones] = useState<number>(0);
+  const [totalPlanes, setTotalPlanes] = useState<number>(0);
 
   useEffect(() => {
     if (token && activeSection === "dashboard") {
@@ -32,6 +35,10 @@ export default function SistemaGestionEmpresarial() {
       // Obtener estadísticas de organizaciones
       const organizaciones = await listarOrganizaciones(token);
       setTotalOrganizaciones(organizaciones.length);
+
+      // Obtener estadísticas de planes
+      const planes = await listarPlanes(token);
+      setTotalPlanes(planes.length);
     } catch (err) {
       console.error("Error al obtener estadísticas:", err);
     }
@@ -166,11 +173,11 @@ export default function SistemaGestionEmpresarial() {
                 </div>
                 <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-purple-900">Documentos</span>
-                    <FileText className="w-5 h-5 text-purple-600" />
+                    <span className="text-sm font-medium text-purple-900">Planes</span>
+                    <CreditCard className="w-5 h-5 text-purple-600" />
                   </div>
-                  <p className="text-2xl font-bold text-purple-900">—</p>
-                  <p className="text-xs text-purple-700 mt-1">Total procesados</p>
+                  <p className="text-2xl font-bold text-purple-900">{totalPlanes}</p>
+                  <p className="text-xs text-purple-700 mt-1">Total registrados</p>
                 </div>
               </div>
             </div>
@@ -190,15 +197,7 @@ export default function SistemaGestionEmpresarial() {
             </div>
           )}
 
-          {activeSection === "seguridad" && (
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Configuración de Seguridad</h2>
-              <p className="text-gray-600">Ajustes de seguridad, autenticación y permisos.</p>
-              <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-500">Funcionalidad en desarrollo...</p>
-              </div>
-            </div>
-          )}
+          {activeSection === "seguridad" && <GestionPlanes />}
 
           {activeSection === "configuracion" && (
             <div>
