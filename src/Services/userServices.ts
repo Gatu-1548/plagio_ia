@@ -130,10 +130,10 @@ export async function editarUsuario(id: number, data: UpdateUserRequest, token: 
 
 /**
  * Eliminar usuario por email
- * DELETE /api/users/by-email/{email}
+ * DELETE /api/users/{id}
  */
-export async function eliminarUsuarioPorEmail(email: string, token: string): Promise<void> {
-    const res = await fetch(`${baseUrl}/api/users/by-email/${encodeURIComponent(email)}`, {
+export async function eliminarUsuarioPorEmail(id: number, token: string): Promise<void> {
+    const res = await fetch(`${baseUrl}/api/users/${encodeURIComponent(id)}`, {
         method: 'DELETE',
         headers: {
             'Authorization': `Bearer ${token}`,

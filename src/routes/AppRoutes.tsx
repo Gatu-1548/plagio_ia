@@ -8,6 +8,7 @@ import Organizations from "@/pages/organizations";
 import SistemaGestionEmpresarial from "@/pages/sistemaGestionEmpresarial";
 import Dashboard from "@/pages/dashboard";
 import Documents from "@/pages/documents";
+import UserManager from "@/Components/Manage_USER/UserManager";
 import UploadScanPage from "@/pages/uploadScan";
 
 export default function AppRoutes() {
@@ -25,6 +26,7 @@ export default function AppRoutes() {
           <Route path="dashboard" element={<Dashboard/>}/>
           <Route path="dashboard/proyectos/listar" element={<ListarProyectos />} />
           <Route path="dashboard/proyectos/:id/documentos" element={<Documents />} />
+          <Route path="dashboard/manage/usuarios" element={<UserManager/>} />
           <Route path="dashboard/proyectos/:id/documentos/upload" element={<UploadScanPage />} />
           <Route path="dashboard/documentos" element={<div>Documentos</div>} />
         </Route>

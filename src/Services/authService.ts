@@ -189,8 +189,12 @@ export async function updateUser(id: number, email: string, password: string, ro
  * ❌ Eliminar usuario por email
  */
 export async function deleteUserByEmail(email: string) {
+  
   try {
     const token = sessionStorage.getItem("token");
+    console.log("🟦 Eliminando usuario:", email);
+console.log("🟦 Token usado:", token);
+console.log("🟦 URL:", `${API_BASE}/api/users/by-email/${email}`);
     if (!token || token === "null" || token.trim() === "") {
       const err = new Error("No auth token found in sessionStorage. Inicia sesión antes de realizar esta acción.");
       console.error("deleteUserByEmail error: no token");
