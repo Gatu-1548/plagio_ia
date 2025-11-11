@@ -3,7 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Building2, Users, Settings, BarChart3, FileText, Shield, CreditCard } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { obtenerUsuarios } from "@/Services/userServices";
+import { listarOrganizaciones } from "@/Services/organizationServices";
 import GestionUsuarios from "./GestionUsuarios";
+import GestionOrganizaciones from "./GestionOrganizaciones";
 
 export default function SistemaGestionEmpresarial() {
   const navigate = useNavigate();
@@ -11,21 +13,27 @@ export default function SistemaGestionEmpresarial() {
   const [activeSection, setActiveSection] = useState<string>("dashboard");
   const [totalUsuarios, setTotalUsuarios] = useState<number>(0);
   const [usuariosActivos, setUsuariosActivos] = useState<number>(0);
+  const [totalOrganizaciones, setTotalOrganizaciones] = useState<number>(0);
 
   useEffect(() => {
     if (token && activeSection === "dashboard") {
-      fetchUsuariosStats();
+      fetchDashboardStats();
     }
   }, [token, activeSection]);
 
-  const fetchUsuariosStats = async () => {
+  const fetchDashboardStats = async () => {
     if (!token) return;
     try {
+      // Obtener estadísticas de usuarios
       const usuarios = await obtenerUsuarios(token);
       setTotalUsuarios(usuarios.length);
       setUsuariosActivos(usuarios.filter((u) => u.enabled).length);
+
+      // Obtener estadísticas de organizaciones
+      const organizaciones = await listarOrganizaciones(token);
+      setTotalOrganizaciones(organizaciones.length);
     } catch (err) {
-      console.error("Error al obtener estadísticas de usuarios:", err);
+      console.error("Error al obtener estadísticas:", err);
     }
   };
 
@@ -143,7 +151,7 @@ export default function SistemaGestionEmpresarial() {
                     <span className="text-sm font-medium text-blue-900">Organizaciones</span>
                     <Building2 className="w-5 h-5 text-blue-600" />
                   </div>
-                  <p className="text-2xl font-bold text-blue-900">—</p>
+                  <p className="text-2xl font-bold text-blue-900">{totalOrganizaciones}</p>
                   <p className="text-xs text-blue-700 mt-1">Total registradas</p>
                 </div>
                 <div className="bg-green-50 rounded-lg p-4 border border-green-200">
@@ -168,15 +176,7 @@ export default function SistemaGestionEmpresarial() {
             </div>
           )}
 
-          {activeSection === "organizaciones" && (
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Gestión de Organizaciones</h2>
-              <p className="text-gray-600">Aquí puedes gestionar todas las organizaciones del sistema.</p>
-              <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-500">Funcionalidad en desarrollo...</p>
-              </div>
-            </div>
-          )}
+          {activeSection === "organizaciones" && <GestionOrganizaciones />}
 
           {activeSection === "usuarios" && <GestionUsuarios />}
 
