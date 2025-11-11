@@ -12,7 +12,7 @@ import { FolderOpen, Loader2, AlertCircle, PlusCircle, Edit2, Trash2, X } from "
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useOrganization } from "@/context/OrganizationContext";
-import ProyectoDetalles from "./ProyectoDetalles";
+import { useNavigate } from "react-router-dom";
 
 const userId = Number(sessionStorage.getItem("userId"));
 
@@ -31,8 +31,9 @@ interface GetProyectosPorUsuarioVars {
 }
 
 export default function ListarProyectos() {
-  const { role, userId: authUserId } = useAuth();
+  const { userId: authUserId } = useAuth();
   const { currentOrg } = useOrganization();
+  const navigate = useNavigate()
 
   // Preferir userId del contexto auth si existe
   const effectiveUserId = authUserId ?? userId;
@@ -73,8 +74,6 @@ export default function ListarProyectos() {
   const [editMode, setEditMode] = useState(false);
   const [nombreProyecto, setNombreProyecto] = useState("");
   const [editId, setEditId] = useState<string | null>(null);
-  const [showDetalles, setShowDetalles] = useState(false);
-  const [selectedProyectoId, setSelectedProyectoId] = useState<string | null>(null);
 
   // Normalizar resultados de las diferentes queries posibles
   const proyectos: Proyecto[] =
@@ -161,7 +160,7 @@ export default function ListarProyectos() {
     );
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div className="p-6 bg-gray-50 min-h-full">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-semibold text-gray-800 flex items-center gap-2">
@@ -204,10 +203,7 @@ export default function ListarProyectos() {
 
               <div className="flex justify-end gap-2">
                 <button
-                  onClick={() => {
-                    setSelectedProyectoId(proyecto.proyecto_id);
-                    setShowDetalles(true);
-                  }}
+                  onClick={() => navigate(`/organization/dashboard/proyectos/${proyecto.proyecto_id}/documentos`)}
                   className="flex items-center gap-1 text-sm bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md"
                 >
                   Ver
@@ -281,31 +277,6 @@ export default function ListarProyectos() {
                   {editMode ? "Actualizar" : "Crear"}
                 </button>
               </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Modal Detalles Proyecto */}
-      <AnimatePresence>
-        {showDetalles && selectedProyectoId && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-amber-50 bg-opacity-40 flex items-center justify-center z-50"
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white rounded-xl shadow-xl p-6 w-full max-w-3xl max-h-[85vh] overflow-auto"
-            >
-              <ProyectoDetalles
-                proyectoId={selectedProyectoId}
-                onClose={() => setShowDetalles(false)}
-                onRefetch={() => refetch()}
-              />
             </motion.div>
           </motion.div>
         )}
