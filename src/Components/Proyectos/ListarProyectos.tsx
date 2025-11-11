@@ -62,7 +62,7 @@ export default function ListarProyectos() {
 
   const { loading, error, data, refetch } = useQueryResult;
 
-  const [crearProyecto] = useMutation<any, { nombre: string; usuario_id: number }>(
+  const [crearProyecto] = useMutation<any, { nombre: string; usuario_id: number, organizacion_id: string }>(
     CREAR_PROYECTO
   );
   const [actualizarProyecto] = useMutation<any, { id: string; nombre: string }>(
@@ -88,7 +88,7 @@ export default function ListarProyectos() {
 
     try {
       await crearProyecto({
-        variables: { nombre: nombreProyecto, usuario_id: Number(effectiveUserId) },
+        variables: { nombre: nombreProyecto, usuario_id: Number(effectiveUserId), organizacion_id: organizacionId as string },
       });
       setNombreProyecto("");
       setShowModal(false);

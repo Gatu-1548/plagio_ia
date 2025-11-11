@@ -5,6 +5,7 @@ import Register from "../Components/Users/Register";
 import DashboardLayout from "../Components/Dashboard/DashboardLayout";
 import ListarProyectos from "../Components/Proyectos/ListarProyectos";
 import Organizations from "@/pages/organizations";
+import SistemaGestionEmpresarial from "@/pages/sistemaGestionEmpresarial";
 import Dashboard from "@/pages/dashboard";
 import Documents from "@/pages/documents";
 
@@ -16,6 +17,7 @@ export default function AppRoutes() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/organizations" element={<Organizations/>}/>
+        <Route path="/erp" element={<SistemaGestionEmpresarial />} />
 
         {/* Dashboard */}
         <Route path="/organization" element={<DashboardLayout />}>
