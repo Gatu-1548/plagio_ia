@@ -1,6 +1,7 @@
-import { useState } from "react";
-import { Folder, FileText, ChevronRight, ChevronDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Folder, FileText, LayoutDashboard } from "lucide-react";
+import { Button } from "../ui/button";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../ui/accordion";
 
 interface SidebarProps {
   collapsed: boolean;
@@ -9,84 +10,104 @@ interface SidebarProps {
 export default function Sidebar({ collapsed }: SidebarProps) {
   const navigate = useNavigate();
 
-  // Estados para desplegar las "carpetas"
-  const [openProyectos, setOpenProyectos] = useState(false);
-  const [openDocumentos, setOpenDocumentos] = useState(false);
-
   return (
     <aside
-      className={`${
-        collapsed ? "w-20" : "w-64"
-      } bg-gray-900 text-white h-screen p-4 transition-all duration-300`}
+      className={`
+        ${collapsed ? "w-20" : "w-64"}
+        bg-gray-900 text-white h-screen p-4 transition-all duration-300 flex flex-col
+      `}
     >
-      
+      <Button
+        variant="ghost"
+        size="sm"
+        className={`
+          justify-start w-full h-auto py-2 mb-4 text-sm
+          ${collapsed ? "px-2" : ""}
+          hover:bg-gray-400/10 rounded
+        `}
+        onClick={() => navigate("/organization/dashboard")}
+      >
+        <div className="flex items-center gap-3 w-full">
+          <LayoutDashboard size={20} />
+          {!collapsed && <span className="font-medium">Dashboard</span>}
+        </div>
+      </Button>
 
-      {/* Sección: Proyectos */}
-      <div>
-        <button
-          onClick={() => setOpenProyectos(!openProyectos)}
-          className="flex items-center justify-between w-full px-2 py-2 rounded hover:bg-gray-800"
-        >
-          <div className="flex items-center gap-3">
-            <Folder size={20} />
-            {!collapsed && <span>Proyectos</span>}
-          </div>
-          {!collapsed &&
-            (openProyectos ? <ChevronDown size={16} /> : <ChevronRight size={16} />)}
-        </button>
+      <Accordion type="multiple" className="w-full flex-1">
+        {/* Sección: Proyectos */}
+        <AccordionItem value="proyectos" className="border-none">
+          <AccordionTrigger
+            className={`
+              px-2 py-2 rounded hover:bg-gray-800 data-[state=open]:bg-gray-800 border-none
+              ${collapsed ? "[&>svg]:hidden" : ""}
+            `}
+          >
+            <div className="flex items-center gap-3 w-full">
+              <Folder size={20} />
+              {!collapsed && <span className="text-sm font-medium">Proyectos</span>}
+            </div>
+          </AccordionTrigger>
+          {!collapsed && (
+            <AccordionContent className="px-2">
+              <div className="space-y-1 ml-4">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="justify-start w-full h-auto py-1 text-sm"
+                  onClick={() => navigate("/organization/dashboard/proyectos/listar")}
+                >
+                  Listar proyectos
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="justify-start w-full h-auto py-1 text-sm"
+                  onClick={() => navigate("/dashboard/proyectos/crear")}
+                >
+                  Crear proyecto
+                </Button>
+              </div>
+            </AccordionContent>
+          )}
+        </AccordionItem>
 
-        {/* Subopciones */}
-        {!collapsed && openProyectos && (
-          <div className="ml-8 mt-1 space-y-1">
-            <button
-              onClick={() => navigate("/organization/dashboard/proyectos/listar")}
-              className="block w-full text-left px-2 py-1 rounded hover:bg-gray-800 text-sm"
-            >
-              Listar proyectos
-            </button>
-            <button
-              onClick={() => navigate("/dashboard/proyectos/crear")}
-              className="block w-full text-left px-2 py-1 rounded hover:bg-gray-800 text-sm"
-            >
-              Crear proyecto
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Sección: Documentos */}
-      <div className="mt-4">
-        <button
-          onClick={() => setOpenDocumentos(!openDocumentos)}
-          className="flex items-center justify-between w-full px-2 py-2 rounded hover:bg-gray-800"
-        >
-          <div className="flex items-center gap-3">
-            <FileText size={20} />
-            {!collapsed && <span>Gestionar Usuarios</span>}
-          </div>
-          {!collapsed &&
-            (openDocumentos ? <ChevronDown size={16} /> : <ChevronRight size={16} />)}
-        </button>
-
-        {/* Subopciones */}
-        {!collapsed && openDocumentos && (
-          <div className="ml-8 mt-1 space-y-1">
-            <button
-              onClick={() => navigate("/organization/dashboard/manage/usuarios")}
-              className="block w-full text-left px-2 py-1 rounded hover:bg-gray-800 text-sm"
-            >
-              Usuarios
-            </button>
-            <button
-              onClick={() => navigate("/dashboard/documentos/subir")}
-              className="block w-full text-left px-2 py-1 rounded hover:bg-gray-800 text-sm"
-            >
-              Subir documento
-            </button>
-          </div>
-          
-        )}
-      </div>
+        {/* Sección: Documentos */}
+        <AccordionItem value="documentos" className="border-none mt-4">
+          <AccordionTrigger
+            className={`
+              px-2 py-2 rounded hover:bg-gray-800 data-[state=open]:bg-gray-800 border-none
+              ${collapsed ? "[&>svg]:hidden" : ""}
+            `}
+          >
+            <div className="flex items-center gap-3 w-full">
+              <FileText size={20} />
+              {!collapsed && <span className="text-sm font-medium">Documentos</span>}
+            </div>
+          </AccordionTrigger>
+          {!collapsed && (
+            <AccordionContent className="px-2">
+              <div className="space-y-1 ml-4">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="justify-start w-full h-auto py-1 text-sm"
+                  onClick={() => navigate("/dashboard/documentos/listar")}
+                >
+                  Listar documentos
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="justify-start w-full h-auto py-1 text-sm"
+                  onClick={() => navigate("/dashboard/documentos/subir")}
+                >
+                  Subir documento
+                </Button>
+              </div>
+            </AccordionContent>
+          )}
+        </AccordionItem>
+      </Accordion>
     </aside>
   );
 }

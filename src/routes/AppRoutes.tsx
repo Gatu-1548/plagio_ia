@@ -5,7 +5,10 @@ import Register from "../Components/Users/Register";
 import DashboardLayout from "../Components/Dashboard/DashboardLayout";
 import ListarProyectos from "../Components/Proyectos/ListarProyectos";
 import Organizations from "@/pages/organizations";
-import UserManager from "@/Components/Manage_USER/UserManager";
+import SistemaGestionEmpresarial from "@/pages/sistemaGestionEmpresarial";
+import Dashboard from "@/pages/dashboard";
+import Documents from "@/pages/documents";
+
 export default function AppRoutes() {
   return (
     <Router>
@@ -14,11 +17,14 @@ export default function AppRoutes() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/organizations" element={<Organizations/>}/>
+        <Route path="/erp" element={<SistemaGestionEmpresarial />} />
 
         {/* Dashboard */}
-        <Route path="/organization/dashboard" element={<DashboardLayout />}>
-          <Route path="proyectos/listar" element={<ListarProyectos />} />
-          <Route path="manage/usuarios" element={<UserManager />} />
+        <Route path="/organization" element={<DashboardLayout />}>
+          <Route path="dashboard" element={<Dashboard/>}/>
+          <Route path="dashboard/proyectos/listar" element={<ListarProyectos />} />
+          <Route path="dashboard/proyectos/:id/documentos" element={<Documents />} />
+          <Route path="dashboard/documentos" element={<div>Documentos</div>} />
         </Route>
       </Routes>
     </Router>

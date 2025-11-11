@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Building2, Calendar, Plus, CreditCard } from 'lucide-react';
+import { Users, Building2, Calendar, Plus, CreditCard, Shield } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/Components/ui/tabs';
 import { Card, CardContent, CardDescription, CardTitle, CardHeader } from '@/Components/ui/card';
 import { Badge } from '@/Components/ui/badge';
@@ -50,7 +50,7 @@ interface EmptyStateProps {
 
 export default function Organizations() {
     const navigate = useNavigate();
-    const { userId, token } = useAuth();
+    const { userId, token, role } = useAuth();
     const { setCurrentOrg } = useOrganization();
     const [ownedOrgs, setOwnedOrgs] = useState<DisplayOrganization[]>([]);
     const [memberOrgs, setMemberOrgs] = useState<DisplayOrganization[]>([]);
@@ -264,9 +264,20 @@ export default function Organizations() {
     return (
         <div className="container mx-auto py-8 px-4">
             <div className="mb-8 flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-gray-900 mb-2">Mis Organizaciones</h1>
-                    <p className="text-muted-foreground">Gestiona tus equipos y proyectos para la detección de plagio.</p>
+                <div className="flex-1">
+                    <div className="flex items-center gap-4 mb-2">
+                        {role === "ROLE_ADMIN" && (
+                            <button
+                                onClick={() => navigate("/erp")}
+                                className="p-3 rounded-lg hover:bg-gray-100 transition flex items-center gap-2 bg-indigo-50 border border-indigo-200"
+                                title="Sistema de Gestión Empresarial"
+                            >
+                                <Shield size={28} className="text-indigo-600" />
+                            </button>
+                        )}
+                        <h1 className="text-3xl font-bold tracking-tight text-gray-900">Mis Organizaciones</h1>
+                    </div>
+                    <p className={`text-muted-foreground ${role === "ROLE_ADMIN" ? "ml-[60px]" : ""}`}>Gestiona tus equipos y proyectos para la detección de plagio.</p>
                 </div>
                 <Button onClick={handleOpenCreateModal} className="flex items-center gap-2">
                     <Plus className="h-4 w-4" />
