@@ -81,7 +81,7 @@ export default function Sidebar({ collapsed }: SidebarProps) {
           >
             <div className="flex items-center gap-3 w-full">
               <FileText size={20} />
-              {!collapsed && <span className="text-sm font-medium">Documentos</span>}
+              {!collapsed && <span className="text-sm font-medium">Usuarios</span>}
             </div>
           </AccordionTrigger>
           {!collapsed && (
@@ -91,9 +91,9 @@ export default function Sidebar({ collapsed }: SidebarProps) {
                   variant="ghost"
                   size="sm"
                   className="justify-start w-full h-auto py-1 text-sm"
-                  onClick={() => navigate("/dashboard/documentos/listar")}
+                  onClick={() => navigate("/organization/dashboard/manage/usuarios")}
                 >
-                  Listar documentos
+                  Gestionar Usuarios
                 </Button>
                 <Button
                   variant="ghost"

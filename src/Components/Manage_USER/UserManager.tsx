@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { createUser, updateUser, getAllUsers, eliminarUsuarioPorEmail } from "../../Services/authService";
-
+import { createUser, updateUser, getAllUsers, eliminarUsuarioPorEmail,deleteUserByEmail } from "../../Services/authService";
+import { useOrganization } from "@/context/OrganizationContext";
+import { listarMiembros } from "@/Services/organizationServices"; 
 const RoleBadge: React.FC<{ role?: string }> = ({ role }) => {
-  const r = (role || "USER").toUpperCase();
+  const r = (role || "ROLE_USER").toUpperCase();
   const base = "inline-block px-2 py-0.5 text-xs font-medium rounded-full";
-  if (r === "ADMIN") return <span className={`${base} bg-red-100 text-red-800`}>ADMIN</span>;
+  if (r === "ROLE_ADMIN") return <span className={`${base} bg-red-100 text-red-800`}>ADMIN</span>;
   return <span className={`${base} bg-green-100 text-green-800`}>USER</span>;
 };
 
@@ -129,19 +130,19 @@ const UserManager: React.FC = () => {
     setDeleteModalOpen(true);
   };
 
-  const confirmDelete = async () => {
-    if (!userToDelete) return;
-    try {
-      await eliminarUsuarioPorEmail(userToDelete.email);
-      setMensaje(`🗑️ Usuario eliminado: ${userToDelete.email}`);
-      setDeleteModalOpen(false);
-      setUserToDelete(null);
-      await fetchUsers();
-    } catch (err) {
-      console.error(err);
-      setMensaje("❌ Error al eliminar usuario");
-    }
-  };
+ const confirmDelete = async () => {
+  if (!userToDelete) return;
+  try {
+    const res = await deleteUserByEmail(userToDelete.email);
+    setMensaje(`🗑️ Usuario eliminado: ${userToDelete.email}`);
+    setDeleteModalOpen(false);
+    setUserToDelete(null);
+    await fetchUsers();
+  } catch (err) {
+    console.error(err);
+    setMensaje(`❌ Error al eliminar usuario: ${(err as Error).message}`);
+  }
+};
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
@@ -173,7 +174,7 @@ const UserManager: React.FC = () => {
             <span className="text-red-600">No iniciado</span>
           )}
         </div>
-        {currentRole !== 'ADMIN' && (
+        {currentRole !== 'ROLE_ADMIN' && (
           <div className="ml-auto text-xs text-yellow-700">Nota: necesitas rol ADMIN para eliminar usuarios</div>
         )}
       </div>
@@ -206,8 +207,8 @@ const UserManager: React.FC = () => {
                       <button onClick={() => openEditModal(u)} className="mr-2 inline-flex items-center px-3 py-1 bg-yellow-400 text-xs rounded">Editar</button>
                       <button
                         onClick={() => openDeleteModal(u)}
-                        disabled={currentRole !== 'ADMIN'}
-                        className={`inline-flex items-center px-3 py-1 text-xs rounded ${currentRole === 'ADMIN' ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-500 cursor-not-allowed'}`}
+                        disabled={currentRole !== 'ROLE_ADMIN'}
+                        className={`inline-flex items-center px-3 py-1 text-xs rounded ${currentRole === 'ROLE_ADMIN' ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-500 cursor-not-allowed'}`}
                       >Eliminar</button>
                     </td>
                   </tr>
@@ -238,8 +239,8 @@ const UserManager: React.FC = () => {
             <div className="mb-3">
               <label className="block text-sm text-gray-700">Rol</label>
               <select value={mRole} onChange={(e) => setMRole(e.target.value)} className="mt-1 block w-full border rounded p-2">
-                <option value="USER">USER</option>
-                <option value="ADMIN">ADMIN</option>
+                <option value="ROLE_USER">USER</option>
+                <option value="ROLE_ADMIN">ADMIN</option>
               </select>
             </div>
 
@@ -265,7 +266,7 @@ const UserManager: React.FC = () => {
             <p className="mb-4">¿Está seguro que desea eliminar al usuario <strong>{userToDelete.email}</strong>? Esta acción no se puede deshacer.</p>
             <div className="flex justify-end space-x-2">
               <button onClick={() => setDeleteModalOpen(false)} className="px-3 py-2 rounded border">Cancelar</button>
-              <button onClick={confirmDelete} disabled={currentRole !== 'ADMIN'} className={`px-3 py-2 rounded ${currentRole === 'ADMIN' ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-500 cursor-not-allowed'}`}>Eliminar</button>
+              <button onClick={confirmDelete} disabled={currentRole !== 'ROLE_ADMIN'} className={`px-3 py-2 rounded ${currentRole === 'ROLE_ADMIN' ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-500 cursor-not-allowed'}`}>Eliminar</button>
             </div>
           </div>
         </div>
