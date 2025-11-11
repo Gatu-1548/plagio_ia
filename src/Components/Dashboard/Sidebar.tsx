@@ -62,7 +62,7 @@ export default function Sidebar({ collapsed }: SidebarProps) {
         >
           <div className="flex items-center gap-3">
             <FileText size={20} />
-            {!collapsed && <span>Documentos</span>}
+            {!collapsed && <span>Gestionar Usuarios</span>}
           </div>
           {!collapsed &&
             (openDocumentos ? <ChevronDown size={16} /> : <ChevronRight size={16} />)}
@@ -72,10 +72,10 @@ export default function Sidebar({ collapsed }: SidebarProps) {
         {!collapsed && openDocumentos && (
           <div className="ml-8 mt-1 space-y-1">
             <button
-              onClick={() => navigate("/dashboard/documentos/listar")}
+              onClick={() => navigate("/organization/dashboard/manage/usuarios")}
               className="block w-full text-left px-2 py-1 rounded hover:bg-gray-800 text-sm"
             >
-              Listar documentos
+              Usuarios
             </button>
             <button
               onClick={() => navigate("/dashboard/documentos/subir")}

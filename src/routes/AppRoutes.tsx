@@ -5,7 +5,7 @@ import Register from "../Components/Users/Register";
 import DashboardLayout from "../Components/Dashboard/DashboardLayout";
 import ListarProyectos from "../Components/Proyectos/ListarProyectos";
 import Organizations from "@/pages/organizations";
-
+import UserManager from "@/Components/Manage_USER/UserManager";
 export default function AppRoutes() {
   return (
     <Router>
@@ -18,7 +18,7 @@ export default function AppRoutes() {
         {/* Dashboard */}
         <Route path="/organization/dashboard" element={<DashboardLayout />}>
           <Route path="proyectos/listar" element={<ListarProyectos />} />
-          <Route path="documentos" element={<div>Documentos</div>} />
+          <Route path="manage/usuarios" element={<UserManager />} />
         </Route>
       </Routes>
     </Router>
