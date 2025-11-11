@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { createUser, updateUser, getAllUsers, eliminarUsuarioPorEmail,deleteUserByEmail } from "../../Services/authService";
-import { useOrganization } from "@/context/OrganizationContext";
-import { listarMiembros } from "@/Services/organizationServices"; 
+import { createUser, updateUser, getAllUsers,deleteUserByEmail } from "../../Services/authService";
 const RoleBadge: React.FC<{ role?: string }> = ({ role }) => {
   const r = (role || "ROLE_USER").toUpperCase();
   const base = "inline-block px-2 py-0.5 text-xs font-medium rounded-full";
@@ -133,7 +131,7 @@ const UserManager: React.FC = () => {
  const confirmDelete = async () => {
   if (!userToDelete) return;
   try {
-    const res = await deleteUserByEmail(userToDelete.email);
+    await deleteUserByEmail(userToDelete.email);
     setMensaje(`🗑️ Usuario eliminado: ${userToDelete.email}`);
     setDeleteModalOpen(false);
     setUserToDelete(null);

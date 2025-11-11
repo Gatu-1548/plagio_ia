@@ -11,7 +11,7 @@ export interface OrganizationResponse {
 }
 
 export interface OrganizationUser {
-    id: string;
+    id: number;
     userId: string | number;
     role: string;
     status: string;
@@ -159,7 +159,7 @@ export async function listarMiembros(
         page?: number;
         sort?: string;
     }
-): Promise<PaginatedMembersResponse> {
+): Promise<OrganizationUser[]> {
     const params = new URLSearchParams();
     if (options?.size) params.append('size', options.size.toString());
     if (options?.page !== undefined) params.append('page', options.page.toString());
