@@ -7,7 +7,7 @@ import {
   getHistorialGlobal,
   getTopRiesgoByUser,
   type Kpis,
-  type HistorialItem, // Asumiendo que se usa para top riesgos; ajusta si es global
+  type HistorialItem, 
 } from "@/Services/biServices";
 import { useEffect, useState } from "react";
 import {
