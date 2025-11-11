@@ -146,7 +146,7 @@ export default function ProyectoDetalles({ proyectoId, onClose, onRefetch }: { p
                 <div className="font-medium">{doc.nombre_archivo}</div>
                 <div className="text-sm text-gray-500">ID: {doc.documento_id} — Estado: {doc.estado}</div>
                 <div className="text-sm text-gray-600 mt-1">
-                  Score: {doc.score_plagio ?? "-"} • Páginas: {doc.page_count ?? "-"} • Palabras: {doc.word_count ?? "-"} • %Plagio: {doc.score_plagio ?? "-"}
+                  Score: {doc.score_plagio ?? "-"} • Páginas: {doc.page_count ?? "-"} • Palabras: {doc.word_count ?? "-" }
                 </div>
               </div>
               <div className="flex flex-col items-end gap-2">
