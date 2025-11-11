@@ -68,10 +68,13 @@ export default function Dashboard() {
         getTopRiesgoByUser(currentOrg.id, token),
       ]);
 
-      setKpis(kpisResponse);
-      setHistorial(historialResponse);
-      setTopRiesgos(topRiesgoResponse.slice(0, 5));
+      setKpis(kpisResponse ? null : kpisResponse);
+      setHistorial(historialResponse ? [] : historialResponse);
+      setTopRiesgos(topRiesgoResponse ? [] : topRiesgoResponse);
     } catch (error) {
+      setKpis(null);
+      setHistorial([]);
+      setTopRiesgos([]);
       console.error("Error fetching global BI data:", error);
     } finally {
       setLoading(false);
@@ -88,19 +91,29 @@ export default function Dashboard() {
     setLoadingMembers(true);
     try {
       const membersResponse = await listarMiembros(currentOrg.id, token, { size: 50, page: 0 });
-      console.log(membersResponse);
-      
-      const allMembers = membersResponse;
-      console.log(allMembers);
+      const allMembers = membersResponse ? [] : membersResponse;
+      if (allMembers.length === 0) {
+         setLoadingMembers(false);
+         setMembers([]);
+         setUserKpis([]);
+         return;
+      }
       
 
       const userKpiPromises = allMembers.slice(0, 10).map(async (member) => { 
         try {
           const userKpi = await getKpisByUser(currentOrg.id, token); 
           const historialUser = await getHistorialByUser(currentOrg.id, token);
-          return { user: member, kpis: userKpi, historial: historialUser };
+
+          if (userKpi) {
+            return null; 
+          }
+
+          const validHistorial = historialUser ? [] : historialUser;
+          
+          return { user: member, kpis: userKpi, historial: validHistorial };
         } catch (err) {
-          console.error(`Error fetching data for user ${member.userId}:`, err);
+          console.error(`Error fetching data for user ${member}:`, err);
           return null;
         }
       });
@@ -121,16 +134,16 @@ export default function Dashboard() {
 
   const riskData = kpis
     ? [
-        { name: "Riesgo Alto", value: kpis.kpi_distribucion_riesgo["Riesgo Alto (71-100%)"] },
-        { name: "Riesgo Medio", value: kpis.kpi_distribucion_riesgo["Riesgo Medio (26-70%)"] },
-        { name: "Riesgo Bajo", value: kpis.kpi_distribucion_riesgo["Riesgo Bajo (0-25%)"] },
+        { name: "Riesgo Alto", value: kpis.kpi_distribucion_riesgo["Riesgo Alto (71-100%)"]?? 0 },
+        { name: "Riesgo Medio", value: kpis.kpi_distribucion_riesgo["Riesgo Medio (26-70%)"]?? 0},
+        { name: "Riesgo Bajo", value: kpis.kpi_distribucion_riesgo["Riesgo Bajo (0-25%)"]?? 0 },
       ]
     : [];
 
   const userComparisonData = userKpis.map((uk) => ({
     name: uk.user.userId.toString().slice(-4),
-    plagio: uk.kpis.kpi_plagio_promedio,
-    documentos: uk.kpis.kpi_documentos_procesados,
+    plagio: uk.kpis.kpi_plagio_promedio ?? 0,
+    documentos: uk.kpis.kpi_documentos_procesados ?? 0,
   }));
 
   const aggregatedTrends = historial.map((item) => ({
@@ -211,27 +224,33 @@ export default function Dashboard() {
             <CardDescription>Análisis global de plagio por nivel de riesgo.</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={riskData}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                  label={({ name, percent }) =>
-                    `${name} ${((percent || 0) * 100).toFixed(0)}%`
-                  }
-                >
-                  {riskData.map((entry, index) => (
-                    <Cell key={`cell-${entry.name}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
+            {riskData.length > 0 && riskData.some(d => d.value > 0) ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={riskData}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                    label={({ name, percent }) =>
+                      `${name} ${((percent || 0) * 100).toFixed(0)}%`
+                    }
+                  >
+                    {riskData.map((entry, index) => (
+                      <Cell key={`cell-${entry.name}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            ): (
+              <div className="flex h-[300px] w-full items-center justify-center">
+                <p className="text-sm text-gray-500">Aún no hay datos de riesgo para mostrar.</p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
