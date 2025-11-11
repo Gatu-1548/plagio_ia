@@ -2,13 +2,13 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useLazyQuery } from "@apollo/client/react";
 import { GET_DOCUMENTO } from "../Services/proyectosGraphQL";
 import { useEffect, useRef, useState } from "react";
-import { Button } from "@/Components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/Components/ui/card";
-import { Badge } from "@/Components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, Upload, Loader2, CheckCircle, Clock, AlertCircle, FileIcon } from "lucide-react";
 import { uploadDocumento } from "@/Services/uploadService";
-import { Separator } from "@/Components/ui/separator";
-import { Progress } from "@/Components/ui/progress";
+import { Separator } from "@/components/ui/separator";
+import { Progress } from "@/components/ui/progress";
 
 interface Documento {
   documento_id: string;

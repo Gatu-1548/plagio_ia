@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Users, Building2, Calendar, Plus, CreditCard, Shield } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/Components/ui/tabs';
-import { Card, CardContent, CardDescription, CardTitle, CardHeader } from '@/Components/ui/card';
-import { Badge } from '@/Components/ui/badge';
-import { Button } from '@/Components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardDescription, CardTitle, CardHeader } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
     Dialog,
     DialogContent,
@@ -12,17 +12,17 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-} from '@/Components/ui/dialog';
-import { Input } from '@/Components/ui/input';
-import { Label } from '@/Components/ui/label';
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from '@/Components/ui/select';
-import { Skeleton } from '@/Components/ui/skeleton'; 
+} from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton'; 
 import { listarPlanes, type Plan } from '@/Services/planServices';
 import { listarOrganizaciones, crearOrganizacion, type OrganizationResponse } from '@/Services/organizationServices';
 import { crearSuscripcion, type SubscriptionResponse } from '@/Services/subscriptionServices';

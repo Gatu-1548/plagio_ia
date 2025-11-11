@@ -1,9 +1,9 @@
 import { Menu, LogOut } from "lucide-react";
 import { Button } from "../ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "../ui/avatar";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { Avatar, AvatarFallback } from "../ui/avatar";
 
 
 interface HeaderProps {

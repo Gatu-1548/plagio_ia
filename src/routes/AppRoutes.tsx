@@ -1,14 +1,14 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Home from "../Components/Users/Home";
-import Login from "../Components/Users/Login";
-import Register from "../Components/Users/Register";
-import DashboardLayout from "../Components/Dashboard/DashboardLayout";
-import ListarProyectos from "../Components/Proyectos/ListarProyectos";
+import Home from "../components/Users/Home";
+import Login from "../components/Users/Login";
+import Register from "../components/Users/Register";
+import DashboardLayout from "../components/Dashboard/DashboardLayout";
+import ListarProyectos from "../components/Proyectos/ListarProyectos";
 import Organizations from "@/pages/organizations";
 import SistemaGestionEmpresarial from "@/pages/sistemaGestionEmpresarial";
 import Dashboard from "@/pages/dashboard";
 import Documents from "@/pages/documents";
-import UserManager from "@/Components/Manage_USER/UserManager";
+import UserManager from "@/components/Manage_USER/UserManager";
 import UploadScanPage from "@/pages/uploadScan";
 
 export default function AppRoutes() {

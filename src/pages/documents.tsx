@@ -7,10 +7,10 @@ import {
 } from "../Services/proyectosGraphQL";
 import { FileText, Loader2, AlertCircle, ChevronLeft, Trash2, Upload } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { Button } from "@/Components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/Components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/Components/ui/table";
-import { Badge } from "@/Components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 
 interface Documento {
   documento_id: string;
